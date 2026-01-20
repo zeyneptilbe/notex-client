@@ -6,11 +6,14 @@ interface Tag {
   name: string;
   slug: string;
   usageCount: number;
+  createdAt: string;
 }
 
 export const tagsApi = {
-  getAll: async (): Promise<Tag[]> => {
-    const response = await api.get<Tag[]>(config.endpoints.tags);
+  getAll: async (searchTerm?: string): Promise<Tag[]> => {
+    const response = await api.get<Tag[]>(config.endpoints.tags, {
+      params: { searchTerm },
+    });
     return response.data;
   },
 
@@ -19,5 +22,19 @@ export const tagsApi = {
       params: { count },
     });
     return response.data;
+  },
+
+  getBySlug: async (slug: string): Promise<Tag> => {
+    const response = await api.get<Tag>(`${config.endpoints.tags}/${slug}`);
+    return response.data;
+  },
+
+  create: async (name: string): Promise<Tag> => {
+    const response = await api.post<Tag>(config.endpoints.tags, { name });
+    return response.data;
+  },
+
+  delete: async (id: string): Promise<void> => {
+    await api.delete(`${config.endpoints.tags}/${id}`);
   },
 };

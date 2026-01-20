@@ -1,14 +1,31 @@
 import { useState } from "react";
+import { useNavigate } from "react-router-dom";
 import { useAuth } from "../../hooks/useAuth";
 import { Avatar } from "../common/Avatar";
+import { NotificationsDropdown } from "./NotificationsDropdown";
 
 interface HeaderProps {
   onMenuClick?: () => void;
+  onCreatePost?: () => void;
 }
 
-export function Header({ onMenuClick }: HeaderProps) {
+export function Header({ onMenuClick, onCreatePost }: HeaderProps) {
+  const navigate = useNavigate();
   const { user, logout } = useAuth();
   const [showDropdown, setShowDropdown] = useState(false);
+  const [searchQuery, setSearchQuery] = useState("");
+
+  const handleSearch = (e: React.FormEvent) => {
+    e.preventDefault();
+    if (searchQuery.trim()) {
+      navigate(`/posts?search=${encodeURIComponent(searchQuery)}`);
+    }
+  };
+
+  const handleLogout = () => {
+    logout();
+    navigate("/login");
+  };
 
   return (
     <header className="bg-white shadow-sm border-b border-gray-200 sticky top-0 z-40">
@@ -23,7 +40,10 @@ export function Header({ onMenuClick }: HeaderProps) {
               <span className="text-xl">☰</span>
             </button>
 
-            <div className="flex items-center gap-3">
+            <div
+              className="flex items-center gap-3 cursor-pointer"
+              onClick={() => navigate("/")}
+            >
               <div className="w-9 h-9 bg-blue-600 rounded-lg flex items-center justify-center">
                 <span className="text-white font-bold">N</span>
               </div>
@@ -34,32 +54,37 @@ export function Header({ onMenuClick }: HeaderProps) {
           </div>
 
           {/* Orta - Arama */}
-          <div className="flex-1 max-w-xl mx-4 hidden md:block">
+          <form
+            onSubmit={handleSearch}
+            className="flex-1 max-w-xl mx-4 hidden md:block"
+          >
             <div className="relative">
               <span className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400">
                 🔍
               </span>
               <input
                 type="text"
+                value={searchQuery}
+                onChange={(e) => setSearchQuery(e.target.value)}
                 placeholder="Post, etiket veya kullanıcı ara..."
                 className="w-full pl-10 pr-4 py-2 bg-gray-100 border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:bg-white"
               />
             </div>
-          </div>
+          </form>
 
           {/* Sağ - Butonlar ve Profil */}
           <div className="flex items-center gap-3">
             {/* Yeni Post Butonu */}
-            <button className="bg-blue-600 text-white px-4 py-2 rounded-lg font-medium hover:bg-blue-700 transition-colors hidden sm:flex items-center gap-2">
+            <button
+              onClick={onCreatePost}
+              className="bg-blue-600 text-white px-4 py-2 rounded-lg font-medium hover:bg-blue-700 transition-colors hidden sm:flex items-center gap-2"
+            >
               <span>+</span>
               <span className="hidden md:inline">Yeni Post</span>
             </button>
 
             {/* Bildirimler */}
-            <button className="relative p-2 text-gray-600 hover:bg-gray-100 rounded-lg">
-              <span className="text-xl">🔔</span>
-              <span className="absolute top-1 right-1 w-2 h-2 bg-red-500 rounded-full"></span>
-            </button>
+            <NotificationsDropdown />
 
             {/* Profil Dropdown */}
             <div className="relative">
@@ -75,27 +100,71 @@ export function Header({ onMenuClick }: HeaderProps) {
               </button>
 
               {showDropdown && (
-                <div className="absolute right-0 mt-2 w-48 bg-white rounded-lg shadow-lg border border-gray-200 py-1">
-                  <div className="px-4 py-2 border-b">
-                    <p className="font-medium text-gray-800">
-                      {user?.fullName}
-                    </p>
-                    <p className="text-sm text-gray-500">{user?.email}</p>
+                <>
+                  {/* Backdrop */}
+                  <div
+                    className="fixed inset-0 z-40"
+                    onClick={() => setShowDropdown(false)}
+                  ></div>
+
+                  {/* Dropdown Menu */}
+                  <div className="absolute right-0 mt-2 w-56 bg-white rounded-xl shadow-lg border border-gray-200 py-1 z-50">
+                    <div className="px-4 py-3 border-b border-gray-100">
+                      <p className="font-medium text-gray-800">
+                        {user?.fullName}
+                      </p>
+                      <p className="text-sm text-gray-500 truncate">
+                        {user?.email}
+                      </p>
+                      <p className="text-xs text-gray-400 mt-1">
+                        {user?.teamName}
+                      </p>
+                    </div>
+
+                    <button
+                      onClick={() => {
+                        setShowDropdown(false);
+                        navigate("/profile");
+                      }}
+                      className="w-full px-4 py-2 text-left text-gray-700 hover:bg-gray-50 flex items-center gap-2"
+                    >
+                      <span>👤</span>
+                      <span>Profilim</span>
+                    </button>
+
+                    <button
+                      onClick={() => {
+                        setShowDropdown(false);
+                        navigate("/favorites");
+                      }}
+                      className="w-full px-4 py-2 text-left text-gray-700 hover:bg-gray-50 flex items-center gap-2"
+                    >
+                      <span>❤️</span>
+                      <span>Favorilerim</span>
+                    </button>
+
+                    <button
+                      onClick={() => {
+                        setShowDropdown(false);
+                        // Settings sayfası eklenecek
+                      }}
+                      className="w-full px-4 py-2 text-left text-gray-700 hover:bg-gray-50 flex items-center gap-2"
+                    >
+                      <span>⚙️</span>
+                      <span>Ayarlar</span>
+                    </button>
+
+                    <hr className="my-1" />
+
+                    <button
+                      onClick={handleLogout}
+                      className="w-full px-4 py-2 text-left text-red-600 hover:bg-red-50 flex items-center gap-2"
+                    >
+                      <span>🚪</span>
+                      <span>Çıkış Yap</span>
+                    </button>
                   </div>
-                  <button className="w-full px-4 py-2 text-left text-gray-700 hover:bg-gray-50">
-                    👤 Profilim
-                  </button>
-                  <button className="w-full px-4 py-2 text-left text-gray-700 hover:bg-gray-50">
-                    ⚙️ Ayarlar
-                  </button>
-                  <hr className="my-1" />
-                  <button
-                    onClick={logout}
-                    className="w-full px-4 py-2 text-left text-red-600 hover:bg-red-50"
-                  >
-                    🚪 Çıkış Yap
-                  </button>
-                </div>
+                </>
               )}
             </div>
           </div>

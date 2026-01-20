@@ -7,14 +7,23 @@ interface LayoutProps {
   children: ReactNode;
   activeMenu: string;
   onMenuChange: (menu: string) => void;
+  onCreatePost?: () => void;
 }
 
-export function Layout({ children, activeMenu, onMenuChange }: LayoutProps) {
+export function Layout({
+  children,
+  activeMenu,
+  onMenuChange,
+  onCreatePost,
+}: LayoutProps) {
   const [sidebarOpen, setSidebarOpen] = useState(false);
 
   return (
     <div className="min-h-screen bg-gray-100">
-      <Header onMenuClick={() => setSidebarOpen(true)} />
+      <Header
+        onMenuClick={() => setSidebarOpen(true)}
+        onCreatePost={onCreatePost}
+      />
 
       <div className="flex">
         <Sidebar
