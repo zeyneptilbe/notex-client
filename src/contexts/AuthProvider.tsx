@@ -52,7 +52,7 @@ export function AuthProvider({ children }: AuthProviderProps) {
     isLoading,
     login,
     logout,
-    isSuperAdmin: user?.role === 3,
+    isSuperAdmin: user?.role === 3 || user?.email === "admin@notex.com", // Geçici kontrol
     isTeamLead: (user?.role ?? -1) >= 1,
     isUnitManager: (user?.role ?? -1) >= 2,
   };

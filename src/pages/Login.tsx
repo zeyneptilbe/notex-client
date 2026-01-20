@@ -1,12 +1,18 @@
 import { useState } from "react";
+import { useNavigate, useLocation } from "react-router-dom";
 import { useAuth } from "../hooks/useAuth";
 
-function Login() {
+export default function Login() {
+  const navigate = useNavigate();
+  const location = useLocation();
   const { login } = useAuth();
+
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [error, setError] = useState("");
   const [loading, setLoading] = useState(false);
+
+  const from = location.state?.from?.pathname || "/";
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -15,11 +21,10 @@ function Login() {
 
     try {
       await login({ email, password });
+      navigate(from, { replace: true });
     } catch (err: unknown) {
       console.error("Giriş hatası:", err);
-      const errorMessage =
-        err instanceof Error ? err.message : "Giriş başarısız";
-      setError(errorMessage);
+      setError("Giriş başarısız. E-posta veya şifre hatalı.");
     } finally {
       setLoading(false);
     }
@@ -102,5 +107,3 @@ function Login() {
     </div>
   );
 }
-
-export default Login;

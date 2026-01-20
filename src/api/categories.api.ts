@@ -7,19 +7,55 @@ interface Category {
   description?: string;
   icon?: string;
   color?: string;
+  displayOrder: number;
+  isActive: boolean;
   postCount: number;
+  createdAt: string;
+}
+
+interface CreateCategoryRequest {
+  name: string;
+  description?: string;
+  icon?: string;
+  color?: string;
+  displayOrder?: number;
 }
 
 export const categoriesApi = {
-  getAll: async (): Promise<Category[]> => {
-    const response = await api.get<Category[]>(config.endpoints.categories);
+  getAll: async (isActive?: boolean): Promise<Category[]> => {
+    const response = await api.get<Category[]>(config.endpoints.categories, {
+      params: { isActive },
+    });
     return response.data;
   },
 
   getById: async (id: string): Promise<Category> => {
     const response = await api.get<Category>(
-      `${config.endpoints.categories}/${id}`
+      `${config.endpoints.categories}/${id}`,
     );
     return response.data;
+  },
+
+  create: async (data: CreateCategoryRequest): Promise<Category> => {
+    const response = await api.post<Category>(
+      config.endpoints.categories,
+      data,
+    );
+    return response.data;
+  },
+
+  update: async (
+    id: string,
+    data: Partial<CreateCategoryRequest>,
+  ): Promise<Category> => {
+    const response = await api.put<Category>(
+      `${config.endpoints.categories}/${id}`,
+      { id, ...data },
+    );
+    return response.data;
+  },
+
+  delete: async (id: string): Promise<void> => {
+    await api.delete(`${config.endpoints.categories}/${id}`);
   },
 };
