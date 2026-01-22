@@ -31,8 +31,9 @@ export default function Dashboard() {
     favoriteMutation.mutate(postId);
   };
 
-  const handlePostClick = (postId: string) => {
-    navigate(`/posts/${postId}`);
+  const handlePostClick = (post: { id: string; slug?: string }) => {
+    const identifier = post.slug || post.id;
+    navigate(`/posts/${identifier}`);
   };
 
   // Hata durumu
@@ -62,6 +63,7 @@ export default function Dashboard() {
   const posts =
     postsData?.items?.map((post) => ({
       id: post.id,
+      slug: post.slug,
       title: post.title,
       summary: post.summary,
       authorName: post.authorName,
@@ -114,7 +116,7 @@ export default function Dashboard() {
           <PostList
             posts={posts}
             emptyMessage="Henüz hiç post paylaşılmamış. İlk postu sen paylaş!"
-            onPostClick={(post) => handlePostClick(post.id)}
+            onPostClick={(post) => handlePostClick(post)}
             onLike={handleLike}
             onFavorite={handleFavorite}
           />
