@@ -4,6 +4,7 @@ import { Button } from "../components/common/Button";
 import { Input } from "../components/common/Input";
 import { useCategories } from "../hooks/useCategories";
 import { useTags } from "../hooks/useTags";
+import { postsApi } from "../api/posts.api";
 
 export default function CreatePost() {
   const navigate = useNavigate();
@@ -79,12 +80,14 @@ export default function CreatePost() {
 
       console.log("Creating post:", postData);
 
-      // Simüle edilmiş başarı
-      await new Promise((resolve) => setTimeout(resolve, 1000));
+      // API'ye gönder
+      await postsApi.create(postData);
 
+      // Başarılı - ana sayfaya dön
       navigate("/");
     } catch (error) {
       console.error("Post oluşturma hatası:", error);
+      setErrors({ submit: "Post oluşturulurken bir hata oluştu." });
     } finally {
       setIsSubmitting(false);
     }
@@ -120,6 +123,13 @@ export default function CreatePost() {
           </h1>
         </div>
       </div>
+
+      {/* Genel Hata */}
+      {errors.submit && (
+        <div className="mb-6 p-4 bg-red-50 text-red-600 rounded-lg">
+          {errors.submit}
+        </div>
+      )}
 
       {/* Form */}
       <form onSubmit={handleSubmit} className="space-y-6">

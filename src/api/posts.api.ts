@@ -1,7 +1,7 @@
 import api from "./axios";
 import { config } from "../config";
 
-interface Post {
+export interface Post {
   id: string;
   title: string;
   slug: string;
@@ -31,7 +31,7 @@ interface Post {
   isFavorited: boolean;
 }
 
-interface PostListResponse {
+export interface PostListResponse {
   items: Post[];
   pageNumber: number;
   totalPages: number;
@@ -40,7 +40,7 @@ interface PostListResponse {
   hasNextPage: boolean;
 }
 
-interface GetPostsParams {
+export interface GetPostsParams {
   pageNumber?: number;
   pageSize?: number;
   categoryId?: string;
@@ -52,7 +52,7 @@ interface GetPostsParams {
   sortBy?: string;
 }
 
-interface CreatePostRequest {
+export interface CreatePostRequest {
   title: string;
   content: string;
   summary?: string;
@@ -62,7 +62,7 @@ interface CreatePostRequest {
   tags: string[];
 }
 
-interface UpdatePostRequest {
+export interface UpdatePostRequest {
   id: string;
   title: string;
   content: string;
