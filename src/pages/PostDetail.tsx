@@ -5,19 +5,8 @@ import { Avatar } from "../components/common/Avatar";
 import { Button } from "../components/common/Button";
 import { Loading } from "../components/common/Loading";
 import { formatDate } from "../utils/helpers";
-
 import { postsApi, type Post } from "../api/posts.api";
-
-interface Comment {
-  id: string;
-  content: string;
-  authorName: string;
-  authorProfileImage?: string;
-  createdAt: string;
-  likeCount: number;
-  isLiked: boolean;
-  replies?: Comment[];
-}
+import { commentsApi, type Comment } from "../api/comments.api";
 
 export default function PostDetail() {
   const { slug } = useParams<{ slug: string }>();
@@ -27,7 +16,10 @@ export default function PostDetail() {
   const [post, setPost] = useState<Post | null>(null);
   const [comments, setComments] = useState<Comment[]>([]);
   const [newComment, setNewComment] = useState("");
+  const [replyingTo, setReplyingTo] = useState<string | null>(null);
+  const [replyContent, setReplyContent] = useState("");
   const [isLoading, setIsLoading] = useState(true);
+  const [isSubmittingComment, setIsSubmittingComment] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
   // Post verisini API'den çek
@@ -44,10 +36,9 @@ export default function PostDetail() {
 
         // Yorumları da çek
         try {
-          const commentsData = await postsApi.getComments(data.id);
+          const commentsData = await commentsApi.getByPostId(data.id);
           setComments(commentsData || []);
         } catch {
-          // Yorum yoksa boş array
           setComments([]);
         }
       } catch (err) {
@@ -115,21 +106,166 @@ export default function PostDetail() {
     }
   };
 
-  const handleAddComment = () => {
+  // Yorum ekle
+  const handleAddComment = async () => {
     if (!newComment.trim() || !post) return;
 
-    // Şimdilik local olarak ekle (API entegrasyonu sonra)
-    const comment: Comment = {
-      id: Date.now().toString(),
-      content: newComment,
-      authorName: user?.fullName || "Anonim",
-      createdAt: new Date().toISOString(),
-      likeCount: 0,
-      isLiked: false,
-    };
+    setIsSubmittingComment(true);
 
-    setComments([comment, ...comments]);
-    setNewComment("");
+    try {
+      const newCommentData = await commentsApi.create({
+        postId: post.id,
+        content: newComment,
+      });
+
+      setComments([newCommentData, ...comments]);
+      setNewComment("");
+
+      // Post'un yorum sayısını güncelle
+      setPost({
+        ...post,
+        commentCount: post.commentCount + 1,
+      });
+    } catch (err) {
+      console.error("Yorum ekleme hatası:", err);
+      alert("Yorum eklenirken bir hata oluştu.");
+    } finally {
+      setIsSubmittingComment(false);
+    }
+  };
+
+  // Yoruma yanıt ekle
+  const handleAddReply = async (parentId: string) => {
+    if (!replyContent.trim() || !post) return;
+
+    setIsSubmittingComment(true);
+
+    try {
+      const newReply = await commentsApi.create({
+        postId: post.id,
+        content: replyContent,
+        parentCommentId: parentId,
+      });
+
+      // Yorumları güncelle - yanıtı parent'a ekle
+      setComments(
+        comments.map((comment) => {
+          if (comment.id === parentId) {
+            return {
+              ...comment,
+              replies: [...(comment.replies || []), newReply],
+            };
+          }
+          return comment;
+        }),
+      );
+
+      setReplyingTo(null);
+      setReplyContent("");
+
+      setPost({
+        ...post,
+        commentCount: post.commentCount + 1,
+      });
+    } catch (err) {
+      console.error("Yanıt ekleme hatası:", err);
+      alert("Yanıt eklenirken bir hata oluştu.");
+    } finally {
+      setIsSubmittingComment(false);
+    }
+  };
+
+  // Yorum sil
+  const handleDeleteComment = async (commentId: string, parentId?: string) => {
+    const confirmed = window.confirm(
+      "Bu yorumu silmek istediğinize emin misiniz?",
+    );
+    if (!confirmed) return;
+
+    try {
+      await commentsApi.delete(commentId);
+
+      if (parentId) {
+        // Yanıt siliniyor
+        setComments(
+          comments.map((comment) => {
+            if (comment.id === parentId) {
+              return {
+                ...comment,
+                replies:
+                  comment.replies?.filter((r) => r.id !== commentId) || [],
+              };
+            }
+            return comment;
+          }),
+        );
+      } else {
+        // Ana yorum siliniyor
+        setComments(comments.filter((c) => c.id !== commentId));
+      }
+
+      if (post) {
+        setPost({
+          ...post,
+          commentCount: post.commentCount - 1,
+        });
+      }
+    } catch (err) {
+      console.error("Yorum silme hatası:", err);
+      alert("Yorum silinirken bir hata oluştu.");
+    }
+  };
+
+  // Yorum beğen
+  const handleLikeComment = async (commentId: string, parentId?: string) => {
+    try {
+      await commentsApi.like(commentId);
+
+      if (parentId) {
+        // Yanıt beğenisi
+        setComments(
+          comments.map((comment) => {
+            if (comment.id === parentId) {
+              return {
+                ...comment,
+                replies:
+                  comment.replies?.map((reply) => {
+                    if (reply.id === commentId) {
+                      return {
+                        ...reply,
+                        isLiked: !reply.isLiked,
+                        likeCount: reply.isLiked
+                          ? reply.likeCount - 1
+                          : reply.likeCount + 1,
+                      };
+                    }
+                    return reply;
+                  }) || [],
+              };
+            }
+            return comment;
+          }),
+        );
+      } else {
+        // Ana yorum beğenisi
+        setComments(
+          comments.map((comment) => {
+            if (comment.id === commentId) {
+              return {
+                ...comment,
+                isLiked: !comment.isLiked,
+                likeCount: comment.isLiked
+                  ? comment.likeCount - 1
+                  : comment.likeCount + 1,
+              };
+            }
+            return comment;
+          }),
+        );
+      }
+    } catch (err) {
+      console.error("Yorum beğeni hatası:", err);
+    }
   };
 
   // Kullanıcı post sahibi mi?
@@ -355,11 +491,13 @@ export default function PostDetail() {
                 placeholder="Yorumunuzu yazın..."
                 className="w-full p-3 border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 resize-none"
                 rows={3}
+                disabled={isSubmittingComment}
               />
               <div className="flex justify-end mt-2">
                 <Button
                   onClick={handleAddComment}
-                  disabled={!newComment.trim()}
+                  disabled={!newComment.trim() || isSubmittingComment}
+                  loading={isSubmittingComment}
                 >
                   Yorum Yap
                 </Button>
@@ -379,24 +517,86 @@ export default function PostDetail() {
                 <div className="flex gap-3">
                   <Avatar name={comment.authorName} size="sm" />
                   <div className="flex-1">
-                    <div className="flex items-center gap-2 mb-1">
-                      <span className="font-semibold text-gray-800 text-sm">
-                        {comment.authorName}
-                      </span>
-                      <span className="text-xs text-gray-400">
-                        {formatDate(comment.createdAt)}
-                      </span>
+                    <div className="flex items-center justify-between mb-1">
+                      <div className="flex items-center gap-2">
+                        <span className="font-semibold text-gray-800 text-sm">
+                          {comment.authorName}
+                        </span>
+                        <span className="text-xs text-gray-400">
+                          {formatDate(comment.createdAt)}
+                        </span>
+                      </div>
+
+                      {/* Yorum sahibiyse sil butonu */}
+                      {user?.id === comment.authorId && (
+                        <button
+                          onClick={() => handleDeleteComment(comment.id)}
+                          className="text-xs text-red-500 hover:text-red-700"
+                        >
+                          Sil
+                        </button>
+                      )}
                     </div>
+
                     <p className="text-gray-600 text-sm mb-2">
                       {comment.content}
                     </p>
+
                     <div className="flex items-center gap-4 text-xs text-gray-500">
-                      <button className="flex items-center gap-1 hover:text-red-500">
+                      <button
+                        onClick={() => handleLikeComment(comment.id)}
+                        className={`flex items-center gap-1 hover:text-red-500 ${comment.isLiked ? "text-red-500" : ""}`}
+                      >
                         <span>{comment.isLiked ? "❤️" : "🤍"}</span>
                         <span>{comment.likeCount}</span>
                       </button>
-                      <button className="hover:text-blue-500">Yanıtla</button>
+                      <button
+                        onClick={() =>
+                          setReplyingTo(
+                            replyingTo === comment.id ? null : comment.id,
+                          )
+                        }
+                        className="hover:text-blue-500"
+                      >
+                        Yanıtla
+                      </button>
                     </div>
+
+                    {/* Yanıt Formu */}
+                    {replyingTo === comment.id && (
+                      <div className="mt-3 pl-4 border-l-2 border-blue-200">
+                        <textarea
+                          value={replyContent}
+                          onChange={(e) => setReplyContent(e.target.value)}
+                          placeholder="Yanıtınızı yazın..."
+                          className="w-full p-2 border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 resize-none text-sm"
+                          rows={2}
+                          disabled={isSubmittingComment}
+                        />
+                        <div className="flex justify-end gap-2 mt-2">
+                          <Button
+                            variant="ghost"
+                            size="sm"
+                            onClick={() => {
+                              setReplyingTo(null);
+                              setReplyContent("");
+                            }}
+                          >
+                            İptal
+                          </Button>
+                          <Button
+                            size="sm"
+                            onClick={() => handleAddReply(comment.id)}
+                            disabled={
+                              !replyContent.trim() || isSubmittingComment
+                            }
+                            loading={isSubmittingComment}
+                          >
+                            Yanıtla
+                          </Button>
+                        </div>
+                      </div>
+                    )}
 
                     {/* Yanıtlar */}
                     {comment.replies && comment.replies.length > 0 && (
@@ -404,18 +604,40 @@ export default function PostDetail() {
                         {comment.replies.map((reply) => (
                           <div key={reply.id} className="flex gap-3">
                             <Avatar name={reply.authorName} size="sm" />
-                            <div>
-                              <div className="flex items-center gap-2 mb-1">
-                                <span className="font-semibold text-gray-800 text-sm">
-                                  {reply.authorName}
-                                </span>
-                                <span className="text-xs text-gray-400">
-                                  {formatDate(reply.createdAt)}
-                                </span>
+                            <div className="flex-1">
+                              <div className="flex items-center justify-between mb-1">
+                                <div className="flex items-center gap-2">
+                                  <span className="font-semibold text-gray-800 text-sm">
+                                    {reply.authorName}
+                                  </span>
+                                  <span className="text-xs text-gray-400">
+                                    {formatDate(reply.createdAt)}
+                                  </span>
+                                </div>
+
+                                {user?.id === reply.authorId && (
+                                  <button
+                                    onClick={() =>
+                                      handleDeleteComment(reply.id, comment.id)
+                                    }
+                                    className="text-xs text-red-500 hover:text-red-700"
+                                  >
+                                    Sil
+                                  </button>
+                                )}
                               </div>
                               <p className="text-gray-600 text-sm">
                                 {reply.content}
                               </p>
+                              <button
+                                onClick={() =>
+                                  handleLikeComment(reply.id, comment.id)
+                                }
+                                className={`flex items-center gap-1 text-xs mt-1 hover:text-red-500 ${reply.isLiked ? "text-red-500" : "text-gray-500"}`}
+                              >
+                                <span>{reply.isLiked ? "❤️" : "🤍"}</span>
+                                <span>{reply.likeCount}</span>
+                              </button>
                             </div>
                           </div>
                         ))}
