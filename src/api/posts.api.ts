@@ -123,4 +123,10 @@ export const postsApi = {
     );
     return response.data;
   },
+  getFavorites: async (): Promise<Post[]> => {
+    const response = await api.get<{ items: Post[] }>(
+      `${config.endpoints.interactions}/favorites`,
+    );
+    return response.data.items;
+  },
 };
