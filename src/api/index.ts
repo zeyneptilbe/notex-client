@@ -6,3 +6,4 @@ export { usersApi } from "./users.api";
 export { unitsApi } from "./units.api";
 export { teamsApi } from "./teams.api";
 export { notificationsApi } from "./notifications.api";
+export { commentsApi } from "./comments.api";

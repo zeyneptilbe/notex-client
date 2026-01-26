@@ -22,5 +22,6 @@ export const config = {
     teams: "/teams",
     notifications: "/notifications",
     interactions: "/interactions",
+    comments: "/comments", // Bu satırı ekle
   },
 } as const;
