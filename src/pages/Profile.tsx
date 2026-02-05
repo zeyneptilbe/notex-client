@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { useParams, useNavigate } from "react-router-dom";
 import { useAuth } from "../hooks/useAuth";
 import { useUser } from "../hooks/useUsers";
@@ -6,47 +6,126 @@ import { Avatar } from "../components/common/Avatar";
 import { Button } from "../components/common/Button";
 import { Loading } from "../components/common/Loading";
 import { PostList } from "../components/posts";
+import { EditProfileModal } from "../components/modals";
 import { formatDate } from "../utils/helpers";
+import { postsApi } from "../api/posts.api";
+import type { Post } from "../api/posts.api";
 
 export default function Profile() {
   const { id } = useParams<{ id: string }>();
   const navigate = useNavigate();
-  const { user: currentUser } = useAuth();
+  const { user: currentUser, refreshUser } = useAuth();
   const [activeTab, setActiveTab] = useState<"posts" | "favorites" | "about">(
     "posts",
   );
+  const [isEditModalOpen, setIsEditModalOpen] = useState(false);
+  const [userPosts, setUserPosts] = useState<Post[]>([]);
+  const [userFavorites, setUserFavorites] = useState<Post[]>([]);
+  const [isLoadingPosts, setIsLoadingPosts] = useState(false);
+  const [isLoadingFavorites, setIsLoadingFavorites] = useState(false);
 
   // Eğer id yoksa kendi profilini göster
   const profileId = id || currentUser?.id || "";
   const isOwnProfile = !id || id === currentUser?.id;
 
   // Kullanıcı verilerini çek
-  const { data: profileUser, isLoading } = useUser(profileId);
+  const { data: profileUser, isLoading, refetch } = useUser(profileId);
 
   // Görüntülenecek kullanıcı (API'den veya current user)
   const user = profileUser || (isOwnProfile ? currentUser : null);
 
-  // Örnek postlar (sonra API'den gelecek)
-  const userPosts = [
-    {
-      id: "1",
-      title: "Clean Architecture ile .NET Core Projesi",
-      summary: "Bu yazıda Clean Architecture prensiplerini öğreneceksiniz...",
-      authorName: user?.fullName || "",
-      teamName: user?.teamName || "",
-      createdAt: "2025-01-18T10:00:00.000Z",
-      likeCount: 42,
-      commentCount: 12,
-      viewCount: 234,
-      categoryName: "Rehber",
-      categoryColor: "#10B981",
-      categoryIcon: "📚",
-      tags: ["C#", ".NET Core"],
-      isPinned: false,
-      isLiked: false,
-      isFavorited: false,
-    },
-  ];
+  // Kullanıcının postlarını çek
+  useEffect(() => {
+    const fetchUserPosts = async () => {
+      if (!profileId) return;
+
+      setIsLoadingPosts(true);
+      try {
+        const response = await postsApi.getAll({ authorId: profileId });
+        setUserPosts(response.items || []);
+      } catch (error) {
+        console.error("Postlar yüklenirken hata:", error);
+        setUserPosts([]);
+      } finally {
+        setIsLoadingPosts(false);
+      }
+    };
+
+    fetchUserPosts();
+  }, [profileId]);
+
+  // Favorileri çek (sadece kendi profilinde)
+  useEffect(() => {
+    const fetchFavorites = async () => {
+      if (!isOwnProfile) return;
+
+      setIsLoadingFavorites(true);
+      try {
+        const favorites = await postsApi.getFavorites();
+        setUserFavorites(favorites || []);
+      } catch (error) {
+        console.error("Favoriler yüklenirken hata:", error);
+        setUserFavorites([]);
+      } finally {
+        setIsLoadingFavorites(false);
+      }
+    };
+
+    if (activeTab === "favorites") {
+      fetchFavorites();
+    }
+  }, [isOwnProfile, activeTab]);
+
+  const handleEditSuccess = async () => {
+    await refetch();
+    await refreshUser();
+  };
+
+  const handlePostClick = (post: { id: string; slug?: string }) => {
+    const identifier = post.slug || post.id;
+    navigate(`/posts/${identifier}`);
+  };
+
+  const handleLike = async (postId: string) => {
+    try {
+      await postsApi.like(postId);
+      // Postları güncelle
+      setUserPosts(
+        userPosts.map((post) => {
+          if (post.id === postId) {
+            return {
+              ...post,
+              isLiked: !post.isLiked,
+              likeCount: post.isLiked ? post.likeCount - 1 : post.likeCount + 1,
+            };
+          }
+          return post;
+        }),
+      );
+    } catch (error) {
+      console.error("Beğeni hatası:", error);
+    }
+  };
+
+  const handleFavorite = async (postId: string) => {
+    try {
+      await postsApi.favorite(postId);
+      // Postları güncelle
+      setUserPosts(
+        userPosts.map((post) => {
+          if (post.id === postId) {
+            return {
+              ...post,
+              isFavorited: !post.isFavorited,
+            };
+          }
+          return post;
+        }),
+      );
+    } catch (error) {
+      console.error("Favori hatası:", error);
+    }
+  };
 
   if (isLoading) {
     return <Loading text="Profil yükleniyor..." />;
@@ -79,6 +158,18 @@ export default function Profile() {
 
   const roleBadge = getRoleBadge(user.role);
 
+  // User objesini düzenleme için hazırla
+  const userForEdit = {
+    firstName: user.firstName || user.fullName?.split(" ")[0] || "",
+    lastName:
+      user.lastName || user.fullName?.split(" ").slice(1).join(" ") || "",
+    title: user.title || "",
+    bio: user.bio || "",
+  };
+
+  // Toplam beğeni sayısını hesapla
+  const totalLikes = userPosts.reduce((sum, post) => sum + post.likeCount, 0);
+
   return (
     <div className="max-w-4xl mx-auto">
       {/* Profil Kartı */}
@@ -105,13 +196,21 @@ export default function Profile() {
                   {roleBadge.label}
                 </span>
               </div>
+              {user.title && (
+                <p className="text-gray-700 font-medium">{user.title}</p>
+              )}
               <p className="text-gray-600">{user.email}</p>
             </div>
 
             {/* Aksiyon Butonları */}
             <div className="flex gap-2">
               {isOwnProfile ? (
-                <Button variant="secondary">✏️ Profili Düzenle</Button>
+                <Button
+                  variant="secondary"
+                  onClick={() => setIsEditModalOpen(true)}
+                >
+                  ✏️ Profili Düzenle
+                </Button>
               ) : (
                 <>
                   <Button variant="primary">➕ Takip Et</Button>
@@ -121,24 +220,35 @@ export default function Profile() {
             </div>
           </div>
 
+          {/* Bio */}
+          {user.bio && (
+            <div className="mb-4 p-4 bg-gray-50 rounded-lg">
+              <p className="text-gray-700">{user.bio}</p>
+            </div>
+          )}
+
           {/* İstatistikler */}
           <div className="grid grid-cols-4 gap-4 py-4 border-y border-gray-100">
             <div className="text-center">
               <p className="text-2xl font-bold text-gray-800">
-                {userPosts.length}
+                {user.postCount || userPosts.length}
               </p>
               <p className="text-sm text-gray-500">Post</p>
             </div>
             <div className="text-center">
-              <p className="text-2xl font-bold text-gray-800">0</p>
+              <p className="text-2xl font-bold text-gray-800">
+                {user.followerCount || 0}
+              </p>
               <p className="text-sm text-gray-500">Takipçi</p>
             </div>
             <div className="text-center">
-              <p className="text-2xl font-bold text-gray-800">0</p>
+              <p className="text-2xl font-bold text-gray-800">
+                {user.followingCount || 0}
+              </p>
               <p className="text-sm text-gray-500">Takip</p>
             </div>
             <div className="text-center">
-              <p className="text-2xl font-bold text-gray-800">0</p>
+              <p className="text-2xl font-bold text-gray-800">{totalLikes}</p>
               <p className="text-sm text-gray-500">Beğeni</p>
             </div>
           </div>
@@ -153,10 +263,10 @@ export default function Profile() {
               <span>🏢</span>
               <span>{user.unitName}</span>
             </div>
-            {currentUser && (
+            {user.createdAt && (
               <div className="flex items-center gap-2 text-gray-600">
                 <span>📅</span>
-                <span>Katılım: {formatDate(new Date().toISOString())}</span>
+                <span>Katılım: {formatDate(user.createdAt)}</span>
               </div>
             )}
           </div>
@@ -175,18 +285,20 @@ export default function Profile() {
                 : "text-gray-600 hover:bg-gray-50"
             }`}
           >
-            📝 Postlar
+            📝 Postlar ({userPosts.length})
           </button>
-          <button
-            onClick={() => setActiveTab("favorites")}
-            className={`flex-1 px-4 py-3 text-sm font-medium transition-colors ${
-              activeTab === "favorites"
-                ? "text-blue-600 border-b-2 border-blue-600 bg-blue-50"
-                : "text-gray-600 hover:bg-gray-50"
-            }`}
-          >
-            ❤️ Favoriler
-          </button>
+          {isOwnProfile && (
+            <button
+              onClick={() => setActiveTab("favorites")}
+              className={`flex-1 px-4 py-3 text-sm font-medium transition-colors ${
+                activeTab === "favorites"
+                  ? "text-blue-600 border-b-2 border-blue-600 bg-blue-50"
+                  : "text-gray-600 hover:bg-gray-50"
+              }`}
+            >
+              ⭐ Favoriler ({userFavorites.length})
+            </button>
+          )}
           <button
             onClick={() => setActiveTab("about")}
             className={`flex-1 px-4 py-3 text-sm font-medium transition-colors ${
@@ -203,25 +315,92 @@ export default function Profile() {
         <div className="p-6">
           {activeTab === "posts" && (
             <div>
-              {userPosts.length > 0 ? (
+              {isLoadingPosts ? (
+                <Loading text="Postlar yükleniyor..." />
+              ) : userPosts.length > 0 ? (
                 <PostList
-                  posts={userPosts}
-                  onPostClick={(post) => navigate(`/posts/${post.id}`)}
+                  posts={userPosts.map((post) => ({
+                    id: post.id,
+                    slug: post.slug,
+                    title: post.title,
+                    summary: post.summary,
+                    authorName: post.authorName,
+                    authorProfileImage: post.authorProfileImage,
+                    teamName: post.teamName,
+                    createdAt: post.createdAt,
+                    likeCount: post.likeCount,
+                    commentCount: post.commentCount,
+                    viewCount: post.viewCount,
+                    categoryName: post.categoryName,
+                    categoryColor: post.categoryColor,
+                    categoryIcon: post.categoryIcon,
+                    tags: post.tags || [],
+                    isPinned: post.isPinned,
+                    isLiked: post.isLiked,
+                    isFavorited: post.isFavorited,
+                  }))}
+                  onPostClick={handlePostClick}
+                  onLike={handleLike}
+                  onFavorite={handleFavorite}
                   emptyMessage="Henüz post paylaşılmamış."
                 />
               ) : (
                 <div className="text-center py-8">
-                  <span className="text-4xl mb-2 block">📭</span>
+                  <span className="text-4xl mb-2 block">📝</span>
                   <p className="text-gray-500">Henüz post paylaşılmamış.</p>
+                  {isOwnProfile && (
+                    <Button
+                      className="mt-4"
+                      onClick={() => navigate("/posts/new")}
+                    >
+                      İlk Postunu Paylaş
+                    </Button>
+                  )}
                 </div>
               )}
             </div>
           )}
 
-          {activeTab === "favorites" && (
-            <div className="text-center py-8">
-              <span className="text-4xl mb-2 block">❤️</span>
-              <p className="text-gray-500">Favori postlar burada görünecek.</p>
+          {activeTab === "favorites" && isOwnProfile && (
+            <div>
+              {isLoadingFavorites ? (
+                <Loading text="Favoriler yükleniyor..." />
+              ) : userFavorites.length > 0 ? (
+                <PostList
+                  posts={userFavorites.map((post) => ({
+                    id: post.id,
+                    slug: post.slug,
+                    title: post.title,
+                    summary: post.summary,
+                    authorName: post.authorName,
+                    authorProfileImage: post.authorProfileImage,
+                    teamName: post.teamName,
+                    createdAt: post.createdAt,
+                    likeCount: post.likeCount,
+                    commentCount: post.commentCount,
+                    viewCount: post.viewCount,
+                    categoryName: post.categoryName,
+                    categoryColor: post.categoryColor,
+                    categoryIcon: post.categoryIcon,
+                    tags: post.tags || [],
+                    isPinned: post.isPinned,
+                    isLiked: post.isLiked,
+                    isFavorited: true,
+                  }))}
+                  onPostClick={handlePostClick}
+                  onLike={handleLike}
+                  onFavorite={handleFavorite}
+                  emptyMessage="Henüz favori post yok."
+                />
+              ) : (
+                <div className="text-center py-8">
+                  <span className="text-4xl mb-2 block">⭐</span>
+                  <p className="text-gray-500">Henüz favori post yok.</p>
+                  <Button className="mt-4" onClick={() => navigate("/")}>
+                    Postları Keşfet
+                  </Button>
+                </div>
+              )}
             </div>
           )}
 
@@ -229,26 +408,48 @@ export default function Profile() {
             <div className="space-y-4">
               <div>
                 <h3 className="font-semibold text-gray-800 mb-2">Bio</h3>
-                <p className="text-gray-600">Henüz bio eklenmemiş.</p>
+                <p className="text-gray-600">
+                  {user.bio || "Henüz bio eklenmemiş."}
+                </p>
               </div>
               <div>
-                <h3 className="font-semibold text-gray-800 mb-2">
-                  Uzmanlık Alanları
-                </h3>
-                <div className="flex flex-wrap gap-2">
-                  <span className="px-3 py-1 bg-gray-100 text-gray-600 rounded-full text-sm">
-                    Henüz eklenmemiş
-                  </span>
-                </div>
+                <h3 className="font-semibold text-gray-800 mb-2">Ünvan</h3>
+                <p className="text-gray-600">{user.title || "Belirtilmemiş"}</p>
+              </div>
+              <div>
+                <h3 className="font-semibold text-gray-800 mb-2">Ekip</h3>
+                <p className="text-gray-600">{user.teamName}</p>
+              </div>
+              <div>
+                <h3 className="font-semibold text-gray-800 mb-2">Birim</h3>
+                <p className="text-gray-600">{user.unitName}</p>
               </div>
               <div>
                 <h3 className="font-semibold text-gray-800 mb-2">İletişim</h3>
                 <p className="text-gray-600">{user.email}</p>
               </div>
+              {user.createdAt && (
+                <div>
+                  <h3 className="font-semibold text-gray-800 mb-2">
+                    Katılım Tarihi
+                  </h3>
+                  <p className="text-gray-600">{formatDate(user.createdAt)}</p>
+                </div>
+              )}
             </div>
           )}
         </div>
       </div>
+
+      {/* Edit Profile Modal */}
+      {isOwnProfile && (
+        <EditProfileModal
+          isOpen={isEditModalOpen}
+          onClose={() => setIsEditModalOpen(false)}
+          user={userForEdit}
+          onSuccess={handleEditSuccess}
+        />
+      )}
     </div>
   );
 }

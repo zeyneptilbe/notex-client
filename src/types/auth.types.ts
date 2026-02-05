@@ -1,5 +1,3 @@
-import type { UserRole } from "./user.types";
-
 export interface LoginRequest {
   email: string;
   password: string;
@@ -14,12 +12,20 @@ export interface LoginResponse {
 export interface CurrentUser {
   id: string;
   email: string;
+  firstName?: string;
+  lastName?: string;
   fullName: string;
-  role: UserRole;
+  role: number;
   teamId: string;
   teamName: string;
   unitName: string;
   profileImageUrl?: string;
+  title?: string;
+  bio?: string;
+  postCount?: number;
+  followerCount?: number;
+  followingCount?: number;
+  createdAt?: string;
 }
 
 export interface AuthState {
