@@ -9,6 +9,7 @@ import { PostList } from "../components/posts";
 import { EditProfileModal } from "../components/modals";
 import { formatDate } from "../utils/helpers";
 import { postsApi } from "../api/posts.api";
+import { usersApi } from "../api/users.api";
 import type { Post } from "../api/posts.api";
 
 export default function Profile() {
@@ -23,6 +24,9 @@ export default function Profile() {
   const [userFavorites, setUserFavorites] = useState<Post[]>([]);
   const [isLoadingPosts, setIsLoadingPosts] = useState(false);
   const [isLoadingFavorites, setIsLoadingFavorites] = useState(false);
+  const [isFollowing, setIsFollowing] = useState(false);
+  const [isFollowLoading, setIsFollowLoading] = useState(false);
+  const [followerCount, setFollowerCount] = useState(0);
 
   // Eğer id yoksa kendi profilini göster
   const profileId = id || currentUser?.id || "";
@@ -33,6 +37,14 @@ export default function Profile() {
 
   // Görüntülenecek kullanıcı (API'den veya current user)
   const user = profileUser || (isOwnProfile ? currentUser : null);
+
+  // Takip durumunu ve takipçi sayısını güncelle
+  useEffect(() => {
+    if (profileUser) {
+      setIsFollowing(profileUser.isFollowing || false);
+      setFollowerCount(profileUser.followerCount || 0);
+    }
+  }, [profileUser]);
 
   // Kullanıcının postlarını çek
   useEffect(() => {
@@ -89,7 +101,6 @@ export default function Profile() {
   const handleLike = async (postId: string) => {
     try {
       await postsApi.like(postId);
-      // Postları güncelle
       setUserPosts(
         userPosts.map((post) => {
           if (post.id === postId) {
@@ -110,7 +121,6 @@ export default function Profile() {
   const handleFavorite = async (postId: string) => {
     try {
       await postsApi.favorite(postId);
-      // Postları güncelle
       setUserPosts(
         userPosts.map((post) => {
           if (post.id === postId) {
@@ -124,6 +134,22 @@ export default function Profile() {
       );
     } catch (error) {
       console.error("Favori hatası:", error);
+    }
+  };
+
+  // Takip Et / Takipten Çık
+  const handleFollow = async () => {
+    if (!profileId || isOwnProfile) return;
+
+    setIsFollowLoading(true);
+    try {
+      const result = await usersApi.follow(profileId);
+      setIsFollowing(result.isFollowing);
+      setFollowerCount((prev) => (result.isFollowing ? prev + 1 : prev - 1));
+    } catch (error) {
+      console.error("Takip hatası:", error);
+    } finally {
+      setIsFollowLoading(false);
     }
   };
 
@@ -213,7 +239,13 @@ export default function Profile() {
                 </Button>
               ) : (
                 <>
-                  <Button variant="primary">➕ Takip Et</Button>
+                  <Button
+                    variant={isFollowing ? "secondary" : "primary"}
+                    onClick={handleFollow}
+                    loading={isFollowLoading}
+                  >
+                    {isFollowing ? "✓ Takip Ediliyor" : "➕ Takip Et"}
+                  </Button>
                   <Button variant="secondary">✉️ Mesaj</Button>
                 </>
               )}
@@ -237,7 +269,7 @@ export default function Profile() {
             </div>
             <div className="text-center">
               <p className="text-2xl font-bold text-gray-800">
-                {user.followerCount || 0}
+                {followerCount}
               </p>
               <p className="text-sm text-gray-500">Takipçi</p>
             </div>

@@ -9,13 +9,15 @@ import { Button } from "../components/common/Button";
 import { Loading } from "../components/common/Loading";
 import { formatDate } from "../utils/helpers";
 
+// Backend'den gelen bildirim türleri
 const NOTIFICATION_ICONS: Record<number, string> = {
-  0: "💬",
-  1: "↩️",
-  2: "❤️",
-  3: "👍",
-  4: "📢",
-  5: "📝",
+  0: "💬", // NewComment
+  1: "↩️", // CommentReply
+  2: "❤️", // PostLike
+  3: "👍", // CommentLike
+  4: "👤", // NewFollower (Backend'de type: 4)
+  5: "📝", // NewPost
+  6: "📢", // Mention
 };
 
 const NOTIFICATION_TYPE_LABELS: Record<number, string> = {
@@ -23,9 +25,24 @@ const NOTIFICATION_TYPE_LABELS: Record<number, string> = {
   1: "Yorum Yanıtı",
   2: "Post Beğenisi",
   3: "Yorum Beğenisi",
-  4: "Bahsetme",
+  4: "Yeni Takipçi",
   5: "Yeni Post",
+  6: "Bahsetme",
 };
+
+interface Notification {
+  id: string;
+  type: number;
+  title: string;
+  message: string;
+  actionUrl?: string;
+  isRead: boolean;
+  createdAt: string;
+  triggeredByUserId?: string;
+  triggeredByUserName?: string;
+  relatedPostId?: string;
+  relatedPostSlug?: string;
+}
 
 export default function Notifications() {
   const navigate = useNavigate();
@@ -33,20 +50,56 @@ export default function Notifications() {
   const markAsReadMutation = useMarkAsRead();
   const markAllAsReadMutation = useMarkAllAsRead();
 
-  const notifications = notificationsData?.items || [];
+  const notifications: Notification[] = notificationsData?.items || [];
   const unreadCount = notificationsData?.unreadCount || 0;
 
-  const handleNotificationClick = (notification: {
-    id: string;
-    isRead: boolean;
-    actionUrl?: string;
-  }) => {
+  const getNavigationUrl = (notification: Notification): string | null => {
+    console.log("Notification:", notification);
+    console.log("ActionUrl:", notification.actionUrl);
+    // actionUrl varsa ve /users/ içeriyorsa, /profile/ olarak değiştir
+    if (notification.actionUrl) {
+      // /users/xxx -> /profile/xxx dönüşümü
+      if (notification.actionUrl.startsWith("/users/")) {
+        const userId = notification.actionUrl.replace("/users/", "");
+        return `/profile/${userId}`;
+      }
+
+      // /posts/ ile başlıyorsa olduğu gibi kullan
+      if (notification.actionUrl.startsWith("/posts/")) {
+        return notification.actionUrl;
+      }
+
+      // Diğer durumlar
+      return notification.actionUrl.startsWith("/")
+        ? notification.actionUrl
+        : `/${notification.actionUrl}`;
+    }
+
+    // actionUrl yoksa, bildirim türüne göre yönlendir
+    // Takipçi bildirimi (type: 4) için
+    if (notification.type === 4 && notification.triggeredByUserId) {
+      return `/profile/${notification.triggeredByUserId}`;
+    }
+
+    // Post ile ilgili bildirimler
+    if (notification.relatedPostId) {
+      return `/posts/${notification.relatedPostId}`;
+    }
+
+    return null;
+  };
+
+  const handleNotificationClick = (notification: Notification) => {
+    // Okunmamışsa okundu işaretle
     if (!notification.isRead) {
       markAsReadMutation.mutate(notification.id);
     }
 
-    if (notification.actionUrl) {
-      navigate(notification.actionUrl);
+    // Yönlendirme URL'ini al
+    const url = getNavigationUrl(notification);
+
+    if (url) {
+      navigate(url);
     }
   };
 
@@ -92,7 +145,7 @@ export default function Notifications() {
               } ${!notification.isRead ? "bg-blue-50 hover:bg-blue-100" : ""}`}
             >
               {/* İkon veya Avatar */}
-              <div className="flex-shrink-0">
+              <div className="shrink-0">
                 {notification.triggeredByUserName ? (
                   <Avatar name={notification.triggeredByUserName} size="md" />
                 ) : (
@@ -108,7 +161,7 @@ export default function Notifications() {
               <div className="flex-1 min-w-0">
                 <div className="flex items-center gap-2 mb-1">
                   <span className="px-2 py-0.5 bg-gray-100 text-gray-600 text-xs rounded-full">
-                    {NOTIFICATION_TYPE_LABELS[notification.type]}
+                    {NOTIFICATION_TYPE_LABELS[notification.type] || "Bildirim"}
                   </span>
                   <span className="text-xs text-gray-400">
                     {formatDate(notification.createdAt)}
@@ -124,7 +177,7 @@ export default function Notifications() {
 
               {/* Okunmamış göstergesi */}
               {!notification.isRead && (
-                <div className="flex-shrink-0 w-3 h-3 bg-blue-500 rounded-full"></div>
+                <div className="shrink-0 w-3 h-3 bg-blue-500 rounded-full"></div>
               )}
             </div>
           ))}
