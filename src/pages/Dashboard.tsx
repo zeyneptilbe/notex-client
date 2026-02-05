@@ -66,6 +66,7 @@ export default function Dashboard() {
       slug: post.slug,
       title: post.title,
       summary: post.summary,
+      authorId: post.authorId,
       authorName: post.authorName,
       authorProfileImage: post.authorProfileImage,
       teamName: post.teamName,

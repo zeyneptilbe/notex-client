@@ -1,4 +1,5 @@
 import { useState } from "react";
+import { useNavigate } from "react-router-dom";
 import { Button } from "../../components/common/Button";
 import { Input } from "../../components/common/Input";
 import { Modal } from "../../components/common/Modal";
@@ -22,6 +23,7 @@ const ROLE_COLORS: Record<number, string> = {
 };
 
 export default function UsersManagement() {
+  const navigate = useNavigate();
   const [searchTerm, setSearchTerm] = useState("");
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [formData, setFormData] = useState({
@@ -51,6 +53,10 @@ export default function UsersManagement() {
     });
     setFormErrors({});
     setIsModalOpen(true);
+  };
+
+  const handleViewProfile = (userId: string) => {
+    navigate(`/profile/${userId}`);
   };
 
   const validateForm = (): boolean => {
@@ -142,10 +148,13 @@ export default function UsersManagement() {
             {usersData?.items?.map((user) => (
               <tr key={user.id} className="hover:bg-gray-50">
                 <td className="px-6 py-4">
-                  <div className="flex items-center gap-3">
+                  <div
+                    className="flex items-center gap-3 cursor-pointer hover:opacity-80"
+                    onClick={() => handleViewProfile(user.id)}
+                  >
                     <Avatar name={user.fullName} size="sm" />
                     <div>
-                      <p className="font-medium text-gray-800">
+                      <p className="font-medium text-gray-800 hover:text-blue-600 transition-colors">
                         {user.fullName}
                       </p>
                       <p className="text-xs text-gray-500">
@@ -171,8 +180,11 @@ export default function UsersManagement() {
                   <span>{user.postCount} post</span>
                 </td>
                 <td className="px-6 py-4 text-right">
-                  <button className="text-gray-400 hover:text-gray-600">
-                    •••
+                  <button
+                    onClick={() => handleViewProfile(user.id)}
+                    className="px-3 py-1 text-sm text-blue-600 hover:bg-blue-50 rounded-lg transition-colors"
+                  >
+                    Profili Gör
                   </button>
                 </td>
               </tr>

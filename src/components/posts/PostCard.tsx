@@ -1,3 +1,4 @@
+import { useNavigate } from "react-router-dom";
 import { Avatar } from "../common/Avatar";
 import { formatDate, formatNumber } from "../../utils/helpers";
 
@@ -5,6 +6,7 @@ interface Post {
   id: string;
   title: string;
   summary?: string;
+  authorId?: string;
   authorName: string;
   authorProfileImage?: string;
   teamName: string;
@@ -29,6 +31,15 @@ interface PostCardProps {
 }
 
 export function PostCard({ post, onClick, onLike, onFavorite }: PostCardProps) {
+  const navigate = useNavigate();
+
+  const handleAuthorClick = (e: React.MouseEvent) => {
+    e.stopPropagation();
+    if (post.authorId) {
+      navigate(`/profile/${post.authorId}`);
+    }
+  };
+
   return (
     <div
       onClick={onClick}
@@ -36,10 +47,13 @@ export function PostCard({ post, onClick, onLike, onFavorite }: PostCardProps) {
     >
       {/* Üst Kısım - Yazar ve Kategori */}
       <div className="flex items-start justify-between mb-3">
-        <div className="flex items-center gap-3">
+        <div
+          className="flex items-center gap-3 cursor-pointer hover:opacity-80"
+          onClick={handleAuthorClick}
+        >
           <Avatar name={post.authorName} imageUrl={post.authorProfileImage} />
           <div>
-            <p className="font-semibold text-gray-800 text-sm">
+            <p className="font-semibold text-gray-800 text-sm hover:text-blue-600 transition-colors">
               {post.authorName}
             </p>
             <p className="text-xs text-gray-500">
