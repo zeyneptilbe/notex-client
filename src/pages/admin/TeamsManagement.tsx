@@ -3,16 +3,20 @@ import { Button } from "../../components/common/Button";
 import { Input } from "../../components/common/Input";
 import { Modal } from "../../components/common/Modal";
 import { Loading } from "../../components/common/Loading";
-import { useTeams, useCreateTeam, useDeleteTeam } from "../../hooks/useTeams";
+import { useTeams } from "../../hooks/useTeams";
 import { useUnits } from "../../hooks/useUnits";
+import { teamsApi } from "../../api/teams.api";
+import type { Team } from "../../api/teams.api";
 
 export default function TeamsManagement() {
-  const { data: teams, isLoading } = useTeams();
+  const { data: teams, isLoading, refetch } = useTeams();
   const { data: units } = useUnits();
-  const createTeamMutation = useCreateTeam();
-  const deleteTeamMutation = useDeleteTeam();
-
   const [isModalOpen, setIsModalOpen] = useState(false);
+  const [isDeleteModalOpen, setIsDeleteModalOpen] = useState(false);
+  const [editingTeam, setEditingTeam] = useState<Team | null>(null);
+  const [deletingTeam, setDeletingTeam] = useState<Team | null>(null);
+  const [isSubmitting, setIsSubmitting] = useState(false);
+  const [dropdownOpen, setDropdownOpen] = useState<string | null>(null);
   const [formData, setFormData] = useState({
     name: "",
     description: "",
@@ -20,24 +24,100 @@ export default function TeamsManagement() {
     unitId: "",
   });
 
+  const resetForm = () => {
+    setFormData({
+      name: "",
+      description: "",
+      code: "",
+      unitId: "",
+    });
+    setEditingTeam(null);
+  };
+
+  const openCreateModal = () => {
+    resetForm();
+    setIsModalOpen(true);
+  };
+
+  const openEditModal = (team: Team) => {
+    setEditingTeam(team);
+    setFormData({
+      name: team.name,
+      description: team.description || "",
+      code: team.code || "",
+      unitId: team.unitId,
+    });
+    setIsModalOpen(true);
+    setDropdownOpen(null);
+  };
+
+  const openDeleteModal = (team: Team) => {
+    setDeletingTeam(team);
+    setIsDeleteModalOpen(true);
+    setDropdownOpen(null);
+  };
+
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
+
+    if (!formData.name.trim()) {
+      alert("Ekip adı zorunludur");
+      return;
+    }
+
+    if (!formData.unitId) {
+      alert("Birim seçimi zorunludur");
+      return;
+    }
+
+    setIsSubmitting(true);
+
     try {
-      await createTeamMutation.mutateAsync(formData);
+      if (editingTeam) {
+        await teamsApi.update(editingTeam.id, {
+          id: editingTeam.id,
+          name: formData.name,
+          description: formData.description || undefined,
+          code: formData.code || undefined,
+          unitId: formData.unitId,
+        });
+      } else {
+        await teamsApi.create({
+          name: formData.name,
+          description: formData.description || undefined,
+          code: formData.code || undefined,
+          unitId: formData.unitId,
+        });
+      }
+
+      await refetch();
       setIsModalOpen(false);
-      setFormData({ name: "", description: "", code: "", unitId: "" });
+      resetForm();
     } catch (error) {
-      console.error("Ekip oluşturma hatası:", error);
+      console.error("Ekip kaydetme hatası:", error);
+      alert("Ekip kaydedilirken bir hata oluştu");
+    } finally {
+      setIsSubmitting(false);
     }
   };
 
-  const handleDelete = async (id: string) => {
-    if (window.confirm("Bu ekibi silmek istediğinize emin misiniz?")) {
-      try {
-        await deleteTeamMutation.mutateAsync(id);
-      } catch (error) {
-        console.error("Ekip silme hatası:", error);
-      }
+  const handleDelete = async () => {
+    if (!deletingTeam) return;
+
+    setIsSubmitting(true);
+
+    try {
+      await teamsApi.delete(deletingTeam.id);
+      await refetch();
+      setIsDeleteModalOpen(false);
+      setDeletingTeam(null);
+    } catch (error) {
+      console.error("Ekip silme hatası:", error);
+      alert(
+        "Ekip silinirken bir hata oluştu. Ekibe bağlı kullanıcılar olabilir.",
+      );
+    } finally {
+      setIsSubmitting(false);
     }
   };
 
@@ -53,7 +133,7 @@ export default function TeamsManagement() {
           <h1 className="text-2xl font-bold text-gray-800">Ekip Yönetimi</h1>
           <p className="text-gray-500 text-sm mt-1">Şirket ekiplerini yönet</p>
         </div>
-        <Button onClick={() => setIsModalOpen(true)}>+ Yeni Ekip</Button>
+        <Button onClick={openCreateModal}>+ Yeni Ekip</Button>
       </div>
 
       {/* Ekip Listesi */}
@@ -61,23 +141,26 @@ export default function TeamsManagement() {
         <table className="w-full">
           <thead className="bg-gray-50 border-b border-gray-100">
             <tr>
-              <th className="px-6 py-3 text-left text-xs font-semibold text-gray-500 uppercase">
+              <th className="text-left px-6 py-4 text-sm font-semibold text-gray-600">
                 Ekip Adı
               </th>
-              <th className="px-6 py-3 text-left text-xs font-semibold text-gray-500 uppercase">
+              <th className="text-left px-6 py-4 text-sm font-semibold text-gray-600">
                 Birim
               </th>
-              <th className="px-6 py-3 text-left text-xs font-semibold text-gray-500 uppercase">
+              <th className="text-left px-6 py-4 text-sm font-semibold text-gray-600">
                 Kod
               </th>
-              <th className="px-6 py-3 text-left text-xs font-semibold text-gray-500 uppercase">
+              <th className="text-center px-6 py-4 text-sm font-semibold text-gray-600">
                 Üye
               </th>
-              <th className="px-6 py-3 text-left text-xs font-semibold text-gray-500 uppercase">
+              <th className="text-center px-6 py-4 text-sm font-semibold text-gray-600">
                 Post
               </th>
-              <th className="px-6 py-3 text-right text-xs font-semibold text-gray-500 uppercase">
-                İşlem
+              <th className="text-center px-6 py-4 text-sm font-semibold text-gray-600">
+                Durum
+              </th>
+              <th className="text-right px-6 py-4 text-sm font-semibold text-gray-600">
+                İşlemler
               </th>
             </tr>
           </thead>
@@ -86,59 +169,104 @@ export default function TeamsManagement() {
               <tr key={team.id} className="hover:bg-gray-50">
                 <td className="px-6 py-4">
                   <div className="flex items-center gap-3">
-                    <div className="w-10 h-10 bg-blue-100 rounded-lg flex items-center justify-center">
-                      <span className="text-blue-600 font-semibold">👥</span>
+                    <div className="w-10 h-10 rounded-lg bg-blue-100 flex items-center justify-center">
+                      <span className="text-lg">👥</span>
                     </div>
                     <div>
-                      <p className="font-medium text-gray-800">{team.name}</p>
-                      <p className="text-xs text-gray-500">
-                        {team.description || "-"}
-                      </p>
+                      <span className="font-medium text-gray-800">
+                        {team.name}
+                      </span>
+                      {team.description && (
+                        <p className="text-xs text-gray-500 truncate max-w-[200px]">
+                          {team.description}
+                        </p>
+                      )}
                     </div>
                   </div>
                 </td>
                 <td className="px-6 py-4">
-                  <span className="px-2 py-1 bg-purple-100 text-purple-700 text-xs rounded-full">
+                  <span className="px-2 py-1 bg-purple-100 text-purple-700 rounded-full text-sm">
                     {team.unitName}
                   </span>
                 </td>
-                <td className="px-6 py-4">
-                  <span className="px-2 py-1 bg-gray-100 text-gray-600 text-xs font-mono rounded">
-                    {team.code || "-"}
+                <td className="px-6 py-4 text-gray-600">{team.code || "-"}</td>
+                <td className="px-6 py-4 text-center">
+                  <span className="text-gray-600">{team.userCount}</span>
+                </td>
+                <td className="px-6 py-4 text-center">
+                  <span className="text-gray-600">{team.postCount}</span>
+                </td>
+                <td className="px-6 py-4 text-center">
+                  <span
+                    className={`px-2 py-1 rounded-full text-xs font-medium ${
+                      team.isActive
+                        ? "bg-green-100 text-green-700"
+                        : "bg-gray-100 text-gray-600"
+                    }`}
+                  >
+                    {team.isActive ? "Aktif" : "Pasif"}
                   </span>
                 </td>
-                <td className="px-6 py-4 text-sm text-gray-600">
-                  {team.userCount} kişi
-                </td>
-                <td className="px-6 py-4 text-sm text-gray-600">
-                  {team.postCount} post
-                </td>
-                <td className="px-6 py-4 text-right">
-                  <button
-                    onClick={() => handleDelete(team.id)}
-                    className="text-red-500 hover:text-red-700 text-sm"
-                  >
-                    Sil
-                  </button>
+                <td className="px-6 py-4">
+                  <div className="flex items-center justify-end gap-2 relative">
+                    <button
+                      onClick={() =>
+                        setDropdownOpen(
+                          dropdownOpen === team.id ? null : team.id,
+                        )
+                      }
+                      className="p-2 text-gray-400 hover:text-gray-600 hover:bg-gray-100 rounded-lg"
+                    >
+                      •••
+                    </button>
+
+                    {dropdownOpen === team.id && (
+                      <>
+                        <div
+                          className="fixed inset-0 z-10"
+                          onClick={() => setDropdownOpen(null)}
+                        />
+                        <div className="absolute right-0 top-10 w-36 bg-white rounded-lg shadow-lg border border-gray-200 py-1 z-20">
+                          <button
+                            onClick={() => openEditModal(team)}
+                            className="w-full px-4 py-2 text-left text-sm text-gray-700 hover:bg-gray-50 flex items-center gap-2"
+                          >
+                            ✏️ Düzenle
+                          </button>
+                          <button
+                            onClick={() => openDeleteModal(team)}
+                            className="w-full px-4 py-2 text-left text-sm text-red-600 hover:bg-red-50 flex items-center gap-2"
+                          >
+                            🗑️ Sil
+                          </button>
+                        </div>
+                      </>
+                    )}
+                  </div>
                 </td>
               </tr>
             ))}
+
+            {(!teams || teams.length === 0) && (
+              <tr>
+                <td colSpan={7} className="px-6 py-12 text-center">
+                  <span className="text-4xl mb-2 block">👥</span>
+                  <p className="text-gray-500">Henüz ekip yok</p>
+                </td>
+              </tr>
+            )}
           </tbody>
         </table>
-
-        {(!teams || teams.length === 0) && (
-          <div className="text-center py-12">
-            <span className="text-4xl mb-2 block">👥</span>
-            <p className="text-gray-500">Henüz ekip yok</p>
-          </div>
-        )}
       </div>
 
-      {/* Yeni Ekip Modal */}
+      {/* Oluştur/Düzenle Modal */}
       <Modal
         isOpen={isModalOpen}
-        onClose={() => setIsModalOpen(false)}
-        title="Yeni Ekip Oluştur"
+        onClose={() => {
+          setIsModalOpen(false);
+          resetForm();
+        }}
+        title={editingTeam ? "Ekip Düzenle" : "Yeni Ekip Oluştur"}
       >
         <form onSubmit={handleSubmit} className="space-y-4">
           <Input
@@ -146,6 +274,7 @@ export default function TeamsManagement() {
             value={formData.name}
             onChange={(e) => setFormData({ ...formData, name: e.target.value })}
             placeholder="Örn: Backend Ekibi"
+            disabled={isSubmitting}
           />
 
           <div>
@@ -158,6 +287,7 @@ export default function TeamsManagement() {
                 setFormData({ ...formData, unitId: e.target.value })
               }
               className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
+              disabled={isSubmitting}
             >
               <option value="">Birim seçin...</option>
               {units?.map((unit) => (
@@ -169,15 +299,16 @@ export default function TeamsManagement() {
           </div>
 
           <Input
-            label="Kod (Opsiyonel)"
+            label="Ekip Kodu"
             value={formData.code}
             onChange={(e) => setFormData({ ...formData, code: e.target.value })}
-            placeholder="Örn: BE"
+            placeholder="Örn: BE, FE, QA"
+            disabled={isSubmitting}
           />
 
           <div>
             <label className="block text-sm font-medium text-gray-700 mb-2">
-              Açıklama (Opsiyonel)
+              Açıklama
             </label>
             <textarea
               value={formData.description}
@@ -187,6 +318,7 @@ export default function TeamsManagement() {
               placeholder="Ekip açıklaması..."
               className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 resize-none"
               rows={3}
+              disabled={isSubmitting}
             />
           </div>
 
@@ -194,15 +326,67 @@ export default function TeamsManagement() {
             <Button
               type="button"
               variant="ghost"
-              onClick={() => setIsModalOpen(false)}
+              onClick={() => {
+                setIsModalOpen(false);
+                resetForm();
+              }}
+              disabled={isSubmitting}
             >
               İptal
             </Button>
-            <Button type="submit" loading={createTeamMutation.isPending}>
-              Oluştur
+            <Button type="submit" loading={isSubmitting}>
+              {editingTeam ? "Güncelle" : "Oluştur"}
             </Button>
           </div>
         </form>
+      </Modal>
+
+      {/* Silme Onay Modal */}
+      <Modal
+        isOpen={isDeleteModalOpen}
+        onClose={() => {
+          setIsDeleteModalOpen(false);
+          setDeletingTeam(null);
+        }}
+        title="Ekip Sil"
+      >
+        <div className="space-y-4">
+          <p className="text-gray-600">
+            <span className="font-semibold text-gray-800">
+              {deletingTeam?.name}
+            </span>{" "}
+            ekibini silmek istediğinize emin misiniz?
+          </p>
+
+          {deletingTeam && deletingTeam.userCount > 0 && (
+            <div className="p-3 bg-yellow-50 text-yellow-700 rounded-lg text-sm">
+              ⚠️ Bu ekipte {deletingTeam.userCount} kullanıcı bulunmaktadır.
+            </div>
+          )}
+
+          <div className="flex justify-end gap-3 pt-4">
+            <Button
+              type="button"
+              variant="ghost"
+              onClick={() => {
+                setIsDeleteModalOpen(false);
+                setDeletingTeam(null);
+              }}
+              disabled={isSubmitting}
+            >
+              İptal
+            </Button>
+            <Button
+              type="button"
+              variant="primary"
+              onClick={handleDelete}
+              loading={isSubmitting}
+              className="bg-red-600 hover:bg-red-700"
+            >
+              Sil
+            </Button>
+          </div>
+        </div>
       </Modal>
     </div>
   );

@@ -11,15 +11,14 @@ export function MainLayout() {
   // Aktif menüyü URL'den belirle
   const getActiveMenu = (): string => {
     const path = location.pathname;
-
     if (path === "/" || path === "/posts") return "home";
     if (path === "/favorites") return "favorites";
     if (path === "/teams") return "teams";
     if (path.startsWith("/admin/users")) return "admin-users";
     if (path.startsWith("/admin/categories")) return "admin-categories";
+    if (path.startsWith("/admin/tags")) return "admin-tags";
     if (path.startsWith("/admin/units")) return "admin-units";
     if (path.startsWith("/admin/teams")) return "admin-teams";
-
     return "home";
   };
 
@@ -42,6 +41,9 @@ export function MainLayout() {
         break;
       case "admin-categories":
         navigate("/admin/categories");
+        break;
+      case "admin-tags":
+        navigate("/admin/tags");
         break;
       case "admin-units":
         navigate("/admin/units");
@@ -67,7 +69,6 @@ export function MainLayout() {
         onMenuClick={() => setSidebarOpen(true)}
         onCreatePost={handleCreatePost}
       />
-
       <div className="flex">
         <Sidebar
           isOpen={sidebarOpen}
@@ -75,7 +76,6 @@ export function MainLayout() {
           activeMenu={getActiveMenu()}
           onMenuChange={handleMenuChange}
         />
-
         <main className="flex-1 p-4 lg:p-6">
           <Outlet />
         </main>

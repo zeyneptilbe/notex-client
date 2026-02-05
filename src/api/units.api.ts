@@ -1,7 +1,7 @@
 import api from "./axios";
 import { config } from "../config";
 
-interface Unit {
+export interface Unit {
   id: string;
   name: string;
   description?: string;
@@ -12,7 +12,15 @@ interface Unit {
   createdAt: string;
 }
 
-interface CreateUnitRequest {
+export interface CreateUnitRequest {
+  name: string;
+  description?: string;
+  code?: string;
+  displayOrder?: number;
+}
+
+export interface UpdateUnitRequest {
+  id: string;
   name: string;
   description?: string;
   code?: string;
@@ -35,14 +43,11 @@ export const unitsApi = {
     return response.data;
   },
 
-  update: async (
-    id: string,
-    data: Partial<CreateUnitRequest>,
-  ): Promise<Unit> => {
-    const response = await api.put<Unit>(`${config.endpoints.units}/${id}`, {
-      id,
-      ...data,
-    });
+  update: async (id: string, data: UpdateUnitRequest): Promise<Unit> => {
+    const response = await api.put<Unit>(
+      `${config.endpoints.units}/${id}`,
+      data,
+    );
     return response.data;
   },
 

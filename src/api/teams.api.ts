@@ -1,7 +1,7 @@
 import api from "./axios";
 import { config } from "../config";
 
-interface Team {
+export interface Team {
   id: string;
   name: string;
   description?: string;
@@ -15,7 +15,16 @@ interface Team {
   createdAt: string;
 }
 
-interface CreateTeamRequest {
+export interface CreateTeamRequest {
+  name: string;
+  description?: string;
+  code?: string;
+  unitId: string;
+  displayOrder?: number;
+}
+
+export interface UpdateTeamRequest {
+  id: string;
   name: string;
   description?: string;
   code?: string;
@@ -45,14 +54,11 @@ export const teamsApi = {
     return response.data;
   },
 
-  update: async (
-    id: string,
-    data: Partial<CreateTeamRequest>,
-  ): Promise<Team> => {
-    const response = await api.put<Team>(`${config.endpoints.teams}/${id}`, {
-      id,
-      ...data,
-    });
+  update: async (id: string, data: UpdateTeamRequest): Promise<Team> => {
+    const response = await api.put<Team>(
+      `${config.endpoints.teams}/${id}`,
+      data,
+    );
     return response.data;
   },
 

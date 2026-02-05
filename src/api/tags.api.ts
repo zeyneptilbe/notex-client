@@ -1,12 +1,17 @@
 import api from "./axios";
 import { config } from "../config";
 
-interface Tag {
+export interface Tag {
   id: string;
   name: string;
   slug: string;
   usageCount: number;
   createdAt: string;
+}
+
+export interface UpdateTagRequest {
+  id: string;
+  name: string;
 }
 
 export const tagsApi = {
@@ -31,6 +36,11 @@ export const tagsApi = {
 
   create: async (name: string): Promise<Tag> => {
     const response = await api.post<Tag>(config.endpoints.tags, { name });
+    return response.data;
+  },
+
+  update: async (id: string, data: UpdateTagRequest): Promise<Tag> => {
+    const response = await api.put<Tag>(`${config.endpoints.tags}/${id}`, data);
     return response.data;
   },
 

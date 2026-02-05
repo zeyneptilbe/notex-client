@@ -22,6 +22,7 @@ import {
   CategoriesManagement,
   UnitsManagement,
   TeamsManagement,
+  TagsManagement,
 } from "../pages/admin";
 
 export const router = createBrowserRouter([
@@ -117,6 +118,14 @@ export const router = createBrowserRouter([
         element: (
           <AdminRoute>
             <TeamsManagement />
+          </AdminRoute>
+        ),
+      },
+      {
+        path: "admin/tags",
+        element: (
+          <AdminRoute>
+            <TagsManagement />
           </AdminRoute>
         ),
       },
