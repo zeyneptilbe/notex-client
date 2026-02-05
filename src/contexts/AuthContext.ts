@@ -4,12 +4,20 @@ import { createContext } from "react";
 export interface CurrentUser {
   id: string;
   email: string;
+  firstName: string;
+  lastName: string;
   fullName: string;
   role: number;
   teamId: string;
   teamName: string;
   unitName: string;
   profileImageUrl?: string;
+  title?: string;
+  bio?: string;
+  postCount?: number;
+  followerCount?: number;
+  followingCount?: number;
+  createdAt?: string;
 }
 
 export interface LoginRequest {
@@ -26,6 +34,7 @@ export interface AuthContextType {
   isSuperAdmin: boolean;
   isTeamLead: boolean;
   isUnitManager: boolean;
+  refreshUser: () => Promise<void>;
 }
 
 export const AuthContext = createContext<AuthContextType | undefined>(

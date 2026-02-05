@@ -1,7 +1,7 @@
 import api from "./axios";
 import { config } from "../config";
 
-interface User {
+export interface User {
   id: string;
   firstName: string;
   lastName: string;
@@ -40,6 +40,14 @@ interface CreateUserRequest {
   title?: string;
 }
 
+export interface UpdateProfileRequest {
+  firstName: string;
+  lastName: string;
+  title?: string;
+  bio?: string;
+  profileImageUrl?: string;
+}
+
 interface GetUsersParams {
   pageNumber?: number;
   pageSize?: number;
@@ -66,12 +74,42 @@ export const usersApi = {
     return response.data;
   },
 
+  updateProfile: async (data: UpdateProfileRequest): Promise<User> => {
+    const response = await api.put<User>(
+      `${config.endpoints.users}/profile`,
+      data,
+    );
+    return response.data;
+  },
+
+  changePassword: async (
+    currentPassword: string,
+    newPassword: string,
+  ): Promise<void> => {
+    await api.put(`${config.endpoints.users}/change-password`, {
+      currentPassword,
+      newPassword,
+    });
+  },
+
   updateRole: async (id: string, role: number): Promise<void> => {
     await api.put(`${config.endpoints.users}/${id}/role`, { role });
   },
 
   follow: async (id: string): Promise<{ isFollowing: boolean }> => {
-    const response = await api.post(`${config.endpoints.users}/${id}/follow`);
+    const response = await api.post<{ isFollowing: boolean }>(
+      `${config.endpoints.users}/${id}/follow`,
+    );
+    return response.data;
+  },
+
+  getTopAuthors: async (count: number = 5): Promise<User[]> => {
+    const response = await api.get<User[]>(
+      `${config.endpoints.users}/top-authors`,
+      {
+        params: { count },
+      },
+    );
     return response.data;
   },
 };

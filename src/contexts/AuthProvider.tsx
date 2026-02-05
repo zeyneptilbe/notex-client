@@ -13,37 +13,44 @@ export function AuthProvider({ children }: AuthProviderProps) {
   const [user, setUser] = useState<CurrentUser | null>(null);
   const [isLoading, setIsLoading] = useState(true);
 
+  const fetchCurrentUser = async () => {
+    try {
+      const currentUser = await authApi.getCurrentUser();
+      setUser(currentUser);
+    } catch (error) {
+      console.error("Auth error:", error);
+      authApi.logout();
+      setUser(null);
+    }
+  };
+
   useEffect(() => {
     const initAuth = async () => {
       const token = localStorage.getItem(config.tokenKey);
       if (token) {
-        try {
-          const currentUser = await authApi.getCurrentUser();
-          setUser(currentUser);
-        } catch (error) {
-          console.error("Auth init error:", error);
-          authApi.logout();
-        }
+        await fetchCurrentUser();
       }
       setIsLoading(false);
     };
-
     initAuth();
   }, []);
 
   const login = async (data: LoginRequest) => {
     const response = await authApi.login(data);
-
     localStorage.setItem(config.tokenKey, response.token);
-    localStorage.setItem(config.refreshTokenKey, response.refreshToken);
-
-    const currentUser = await authApi.getCurrentUser();
-    setUser(currentUser);
+    if (response.refreshToken) {
+      localStorage.setItem(config.refreshTokenKey, response.refreshToken);
+    }
+    await fetchCurrentUser();
   };
 
   const logout = () => {
     authApi.logout();
     setUser(null);
+  };
+
+  const refreshUser = async () => {
+    await fetchCurrentUser();
   };
 
   const value: AuthContextType = {
@@ -52,7 +59,8 @@ export function AuthProvider({ children }: AuthProviderProps) {
     isLoading,
     login,
     logout,
-    isSuperAdmin: user?.role === 3 || user?.email === "admin@notex.com", // Geçici kontrol
+    refreshUser,
+    isSuperAdmin: user?.role === 3 || user?.email === "admin@notex.com",
     isTeamLead: (user?.role ?? -1) >= 1,
     isUnitManager: (user?.role ?? -1) >= 2,
   };
