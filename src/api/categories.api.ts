@@ -1,7 +1,7 @@
 import api from "./axios";
 import { config } from "../config";
 
-interface Category {
+export interface Category {
   id: string;
   name: string;
   description?: string;
@@ -13,7 +13,16 @@ interface Category {
   createdAt: string;
 }
 
-interface CreateCategoryRequest {
+export interface CreateCategoryRequest {
+  name: string;
+  description?: string;
+  icon?: string;
+  color?: string;
+  displayOrder?: number;
+}
+
+export interface UpdateCategoryRequest {
+  id: string;
   name: string;
   description?: string;
   icon?: string;
@@ -46,11 +55,11 @@ export const categoriesApi = {
 
   update: async (
     id: string,
-    data: Partial<CreateCategoryRequest>,
+    data: UpdateCategoryRequest,
   ): Promise<Category> => {
     const response = await api.put<Category>(
       `${config.endpoints.categories}/${id}`,
-      { id, ...data },
+      data,
     );
     return response.data;
   },
