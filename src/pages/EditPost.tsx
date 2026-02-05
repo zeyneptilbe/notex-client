@@ -19,7 +19,6 @@ export default function EditPost() {
   const [content, setContent] = useState("");
   const [categoryId, setCategoryId] = useState("");
   const [selectedTags, setSelectedTags] = useState<string[]>([]);
-  const [tagInput, setTagInput] = useState("");
   const [visibility, setVisibility] = useState(2);
   const [status, setStatus] = useState(1);
   const [isLoading, setIsLoading] = useState(true);
@@ -39,7 +38,7 @@ export default function EditPost() {
         setSummary(post.summary || "");
         setContent(post.content || "");
         setCategoryId(post.categoryId || "");
-        setSelectedTags(post.tags || []);
+        setSelectedTags(post.tags?.map((t) => t.toLowerCase()) || []);
         setVisibility(post.visibility);
         setStatus(post.status);
       } catch (error) {
@@ -53,23 +52,19 @@ export default function EditPost() {
     fetchPost();
   }, [slug]);
 
-  const handleAddTag = () => {
-    const tag = tagInput.trim().toLowerCase();
-    if (tag && !selectedTags.includes(tag) && selectedTags.length < 5) {
+  const handleSelectTag = (tagName: string) => {
+    const tag = tagName.toLowerCase();
+    if (selectedTags.includes(tag)) {
+      // Zaten seçiliyse kaldır
+      setSelectedTags(selectedTags.filter((t) => t !== tag));
+    } else if (selectedTags.length < 5) {
+      // Seçili değilse ve limit aşılmamışsa ekle
       setSelectedTags([...selectedTags, tag]);
-      setTagInput("");
     }
   };
 
   const handleRemoveTag = (tag: string) => {
     setSelectedTags(selectedTags.filter((t) => t !== tag));
-  };
-
-  const handleSelectExistingTag = (tagName: string) => {
-    const tag = tagName.toLowerCase();
-    if (!selectedTags.includes(tag) && selectedTags.length < 5) {
-      setSelectedTags([...selectedTags, tag]);
-    }
   };
 
   const validate = (): boolean => {
@@ -127,15 +122,6 @@ export default function EditPost() {
   const handleBack = () => {
     navigate(-1);
   };
-
-  // Filtrelenmiş tag önerileri
-  const tagSuggestions = allTags
-    ?.filter(
-      (tag) =>
-        tag.name.toLowerCase().includes(tagInput.toLowerCase()) &&
-        !selectedTags.includes(tag.name.toLowerCase()),
-    )
-    .slice(0, 5);
 
   // Yükleniyor
   if (isLoading) {
@@ -282,15 +268,16 @@ export default function EditPost() {
             </div>
           </div>
 
-          {/* Etiketler */}
+          {/* Etiketler - Dropdown Seçim */}
           <div className="mt-6">
             <label className="block text-sm font-medium text-gray-700 mb-2">
               Etiketler (Maks. 5)
             </label>
 
+            {/* Seçilen Etiketler */}
             {selectedTags.length > 0 && (
               <div className="flex flex-wrap gap-2 mb-3">
-                {selectedTags.map((tag: string) => (
+                {selectedTags.map((tag) => (
                   <span
                     key={tag}
                     className="flex items-center gap-1 px-3 py-1 bg-blue-100 text-blue-700 rounded-full text-sm"
@@ -308,50 +295,51 @@ export default function EditPost() {
               </div>
             )}
 
-            <div className="relative">
-              <div className="flex gap-2">
-                <input
-                  type="text"
-                  value={tagInput}
-                  onChange={(e) => setTagInput(e.target.value)}
-                  onKeyDown={(e) => {
-                    if (e.key === "Enter") {
-                      e.preventDefault();
-                      handleAddTag();
-                    }
-                  }}
-                  placeholder="Etiket yazın ve Enter'a basın..."
-                  className="flex-1 px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
-                  disabled={isSubmitting || selectedTags.length >= 5}
-                />
-                <Button
-                  type="button"
-                  variant="secondary"
-                  onClick={handleAddTag}
-                  disabled={!tagInput.trim() || selectedTags.length >= 5}
-                >
-                  Ekle
-                </Button>
-              </div>
+            {/* Etiket Seçim Alanı */}
+            {allTags && allTags.length > 0 ? (
+              <div className="border border-gray-300 rounded-lg p-3 max-h-48 overflow-y-auto">
+                <div className="flex flex-wrap gap-2">
+                  {allTags.map((tag) => {
+                    const isSelected = selectedTags.includes(
+                      tag.name.toLowerCase(),
+                    );
+                    const isDisabled = !isSelected && selectedTags.length >= 5;
 
-              {tagInput && tagSuggestions && tagSuggestions.length > 0 && (
-                <div className="absolute z-10 w-full mt-1 bg-white border border-gray-200 rounded-lg shadow-lg">
-                  {tagSuggestions.map((tag) => (
-                    <button
-                      key={tag.id}
-                      type="button"
-                      onClick={() => handleSelectExistingTag(tag.name)}
-                      className="w-full px-4 py-2 text-left text-sm text-gray-700 hover:bg-gray-50 flex items-center justify-between"
-                    >
-                      <span>#{tag.name}</span>
-                      <span className="text-xs text-gray-400">
-                        {tag.usageCount} kullanım
-                      </span>
-                    </button>
-                  ))}
+                    return (
+                      <button
+                        key={tag.id}
+                        type="button"
+                        onClick={() => !isDisabled && handleSelectTag(tag.name)}
+                        disabled={isDisabled}
+                        className={`px-3 py-1.5 rounded-full text-sm font-medium transition-colors ${
+                          isSelected
+                            ? "bg-blue-600 text-white"
+                            : isDisabled
+                              ? "bg-gray-100 text-gray-400 cursor-not-allowed"
+                              : "bg-gray-100 text-gray-700 hover:bg-gray-200"
+                        }`}
+                      >
+                        #{tag.name}
+                        <span className="ml-1 text-xs opacity-70">
+                          ({tag.usageCount})
+                        </span>
+                      </button>
+                    );
+                  })}
                 </div>
-              )}
-            </div>
+              </div>
+            ) : (
+              <p className="text-sm text-gray-500">
+                Henüz etiket oluşturulmamış. Yönetim panelinden etiket
+                ekleyebilirsiniz.
+              </p>
+            )}
+
+            {selectedTags.length >= 5 && (
+              <p className="mt-2 text-sm text-amber-600">
+                Maksimum 5 etiket seçebilirsiniz.
+              </p>
+            )}
           </div>
         </div>
 
