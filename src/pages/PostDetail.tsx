@@ -4,6 +4,7 @@ import { useAuth } from "../hooks/useAuth";
 import { Avatar } from "../components/common/Avatar";
 import { Button } from "../components/common/Button";
 import { Loading } from "../components/common/Loading";
+import { MarkdownViewer } from "../components/common";
 import { formatDate } from "../utils/helpers";
 import { postsApi, type Post } from "../api/posts.api";
 import { commentsApi, type Comment } from "../api/comments.api";
@@ -121,7 +122,6 @@ export default function PostDetail() {
       setComments([newCommentData, ...comments]);
       setNewComment("");
 
-      // Post'un yorum sayısını güncelle
       setPost({
         ...post,
         commentCount: post.commentCount + 1,
@@ -147,7 +147,6 @@ export default function PostDetail() {
         parentCommentId: parentId,
       });
 
-      // Yorumları güncelle - yanıtı parent'a ekle
       setComments(
         comments.map((comment) => {
           if (comment.id === parentId) {
@@ -186,7 +185,6 @@ export default function PostDetail() {
       await commentsApi.delete(commentId);
 
       if (parentId) {
-        // Yanıt siliniyor
         setComments(
           comments.map((comment) => {
             if (comment.id === parentId) {
@@ -200,7 +198,6 @@ export default function PostDetail() {
           }),
         );
       } else {
-        // Ana yorum siliniyor
         setComments(comments.filter((c) => c.id !== commentId));
       }
 
@@ -222,7 +219,6 @@ export default function PostDetail() {
       await commentsApi.like(commentId);
 
       if (parentId) {
-        // Yanıt beğenisi
         setComments(
           comments.map((comment) => {
             if (comment.id === parentId) {
@@ -247,7 +243,6 @@ export default function PostDetail() {
           }),
         );
       } else {
-        // Ana yorum beğenisi
         setComments(
           comments.map((comment) => {
             if (comment.id === commentId) {
@@ -265,6 +260,13 @@ export default function PostDetail() {
       }
     } catch (err) {
       console.error("Yorum beğeni hatası:", err);
+    }
+  };
+
+  // Yazar profiline git
+  const handleAuthorClick = () => {
+    if (post?.authorId) {
+      navigate(`/profile/${post.authorId}`);
     }
   };
 
@@ -303,43 +305,30 @@ export default function PostDetail() {
         <span>Geri Dön</span>
       </button>
 
-      {/* Post İçeriği */}
+      {/* Post Kartı */}
       <article className="bg-white rounded-xl shadow-sm border border-gray-100 overflow-hidden">
         {/* Header */}
         <div className="p-6 border-b border-gray-100">
-          {/* Kategori ve Etiketler */}
-          <div className="flex items-center gap-2 mb-4">
-            {post.isPinned && (
-              <span className="px-2 py-1 bg-amber-100 text-amber-700 text-xs font-medium rounded-full">
-                📌 Sabitlenmiş
-              </span>
-            )}
-            {post.categoryName && (
-              <span
-                className="px-2 py-1 text-xs font-medium rounded-full"
-                style={{
-                  backgroundColor: `${post.categoryColor}20`,
-                  color: post.categoryColor,
-                }}
-              >
-                {post.categoryIcon} {post.categoryName}
-              </span>
-            )}
-          </div>
-
-          {/* Başlık */}
-          <h1 className="text-2xl md:text-3xl font-bold text-gray-800 mb-4">
+          <h1 className="text-2xl font-bold text-gray-800 mb-4">
             {post.title}
           </h1>
 
-          {/* Yazar Bilgisi */}
           <div className="flex items-center justify-between">
-            <div className="flex items-center gap-3">
-              <Avatar name={post.authorName} size="lg" />
+            <div
+              className="flex items-center gap-3 cursor-pointer hover:opacity-80"
+              onClick={handleAuthorClick}
+            >
+              <Avatar
+                name={post.authorName}
+                imageUrl={post.authorProfileImage}
+                size="md"
+              />
               <div>
-                <p className="font-semibold text-gray-800">{post.authorName}</p>
+                <p className="font-semibold text-gray-800 hover:text-blue-600 transition-colors">
+                  {post.authorName}
+                </p>
                 <p className="text-sm text-gray-500">
-                  {post.authorTitle} • {post.teamName}
+                  {post.authorTitle || post.teamName} • {post.teamName}
                 </p>
                 <p className="text-xs text-gray-400">
                   {formatDate(post.createdAt)}
@@ -347,7 +336,7 @@ export default function PostDetail() {
               </div>
             </div>
 
-            {/* Aksiyonlar */}
+            {/* Aksiyon Butonları */}
             <div className="flex items-center gap-2">
               <button
                 onClick={handleLike}
@@ -372,11 +361,6 @@ export default function PostDetail() {
                 {post.isFavorited ? "⭐" : "☆"}
               </button>
 
-              <button className="p-2 bg-gray-100 text-gray-600 rounded-lg hover:bg-gray-200 transition-colors">
-                🔗
-              </button>
-
-              {/* Düzenle/Sil - Sadece post sahibine göster */}
               {isOwner && (
                 <>
                   <button
@@ -422,38 +406,9 @@ export default function PostDetail() {
             </div>
           )}
 
-          {/* Post Content */}
+          {/* Post Content - Markdown Render */}
           <div className="prose prose-gray max-w-none">
-            {post.content?.split("\n").map((line: string, index: number) => {
-              if (line.startsWith("## ")) {
-                return (
-                  <h2
-                    key={index}
-                    className="text-xl font-bold text-gray-800 mt-6 mb-3"
-                  >
-                    {line.replace("## ", "")}
-                  </h2>
-                );
-              }
-              if (line.startsWith("### ")) {
-                return (
-                  <h3
-                    key={index}
-                    className="text-lg font-semibold text-gray-800 mt-4 mb-2"
-                  >
-                    {line.replace("### ", "")}
-                  </h3>
-                );
-              }
-              if (line.trim()) {
-                return (
-                  <p key={index} className="text-gray-600 mb-3 leading-relaxed">
-                    {line}
-                  </p>
-                );
-              }
-              return null;
-            })}
+            <MarkdownViewer content={post.content || ""} />
           </div>
 
           {/* İstatistikler */}
@@ -527,7 +482,6 @@ export default function PostDetail() {
                         </span>
                       </div>
 
-                      {/* Yorum sahibiyse sil butonu */}
                       {user?.id === comment.authorId && (
                         <button
                           onClick={() => handleDeleteComment(comment.id)}
@@ -545,7 +499,9 @@ export default function PostDetail() {
                     <div className="flex items-center gap-4 text-xs text-gray-500">
                       <button
                         onClick={() => handleLikeComment(comment.id)}
-                        className={`flex items-center gap-1 hover:text-red-500 ${comment.isLiked ? "text-red-500" : ""}`}
+                        className={`flex items-center gap-1 hover:text-red-500 ${
+                          comment.isLiked ? "text-red-500" : ""
+                        }`}
                       >
                         <span>{comment.isLiked ? "❤️" : "🤍"}</span>
                         <span>{comment.likeCount}</span>
@@ -576,7 +532,6 @@ export default function PostDetail() {
                         <div className="flex justify-end gap-2 mt-2">
                           <Button
                             variant="ghost"
-                            size="sm"
                             onClick={() => {
                               setReplyingTo(null);
                               setReplyContent("");
@@ -585,7 +540,6 @@ export default function PostDetail() {
                             İptal
                           </Button>
                           <Button
-                            size="sm"
                             onClick={() => handleAddReply(comment.id)}
                             disabled={
                               !replyContent.trim() || isSubmittingComment
@@ -633,7 +587,11 @@ export default function PostDetail() {
                                 onClick={() =>
                                   handleLikeComment(reply.id, comment.id)
                                 }
-                                className={`flex items-center gap-1 text-xs mt-1 hover:text-red-500 ${reply.isLiked ? "text-red-500" : "text-gray-500"}`}
+                                className={`flex items-center gap-1 text-xs mt-1 hover:text-red-500 ${
+                                  reply.isLiked
+                                    ? "text-red-500"
+                                    : "text-gray-500"
+                                }`}
                               >
                                 <span>{reply.isLiked ? "❤️" : "🤍"}</span>
                                 <span>{reply.likeCount}</span>

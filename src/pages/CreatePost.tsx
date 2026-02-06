@@ -5,6 +5,7 @@ import { Input } from "../components/common/Input";
 import { useCategories } from "../hooks/useCategories";
 import { useTags } from "../hooks/useTags";
 import { postsApi } from "../api/posts.api";
+import { MarkdownEditor } from "../components/common";
 
 export default function CreatePost() {
   const navigate = useNavigate();
@@ -147,19 +148,14 @@ export default function CreatePost() {
             <label className="block text-sm font-medium text-gray-700 mb-2">
               İçerik
             </label>
-            <textarea
+            <MarkdownEditor
               value={content}
-              onChange={(e) => setContent(e.target.value)}
-              placeholder="Post içeriğinizi yazın..."
-              className={`w-full px-4 py-3 border rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 resize-none font-mono text-sm ${
-                errors.content ? "border-red-500" : "border-gray-300"
-              }`}
-              rows={15}
+              onChange={setContent}
+              placeholder="Post içeriğinizi Markdown formatında yazın..."
+              height={400}
               disabled={isSubmitting}
+              error={errors.content}
             />
-            {errors.content && (
-              <p className="mt-1 text-sm text-red-600">{errors.content}</p>
-            )}
           </div>
         </div>
 
