@@ -69,7 +69,10 @@ export default function Profile() {
   // Favorileri çek (sadece kendi profilinde)
   useEffect(() => {
     const fetchFavorites = async () => {
-      if (!isOwnProfile) return;
+      if (!isOwnProfile) {
+        setUserFavorites([]);
+        return;
+      }
 
       setIsLoadingFavorites(true);
       try {
@@ -83,9 +86,7 @@ export default function Profile() {
       }
     };
 
-    if (activeTab === "favorites") {
-      fetchFavorites();
-    }
+    fetchFavorites();
   }, [isOwnProfile, activeTab]);
 
   const handleEditSuccess = async () => {
@@ -201,7 +202,7 @@ export default function Profile() {
       {/* Profil Kartı */}
       <div className="bg-white rounded-xl shadow-sm border border-gray-100 overflow-hidden mb-6">
         {/* Cover Image */}
-        <div className="h-40 bg-gradient-to-r from-blue-500 via-purple-500 to-pink-500"></div>
+        <div className="h-40 bg-linear-to-r from-blue-500 via-purple-500 to-pink-500"></div>
 
         {/* Profile Info */}
         <div className="px-6 pb-6">
@@ -238,16 +239,13 @@ export default function Profile() {
                   ✏️ Profili Düzenle
                 </Button>
               ) : (
-                <>
-                  <Button
-                    variant={isFollowing ? "secondary" : "primary"}
-                    onClick={handleFollow}
-                    loading={isFollowLoading}
-                  >
-                    {isFollowing ? "✓ Takip Ediliyor" : "➕ Takip Et"}
-                  </Button>
-                  <Button variant="secondary">✉️ Mesaj</Button>
-                </>
+                <Button
+                  variant={isFollowing ? "secondary" : "primary"}
+                  onClick={handleFollow}
+                  loading={isFollowLoading}
+                >
+                  {isFollowing ? "✓ Takip Ediliyor" : "➕ Takip Et"}
+                </Button>
               )}
             </div>
           </div>
@@ -263,7 +261,7 @@ export default function Profile() {
           <div className="grid grid-cols-4 gap-4 py-4 border-y border-gray-100">
             <div className="text-center">
               <p className="text-2xl font-bold text-gray-800">
-                {user.postCount || userPosts.length}
+                {userPosts.length}
               </p>
               <p className="text-sm text-gray-500">Post</p>
             </div>
