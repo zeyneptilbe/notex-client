@@ -177,7 +177,7 @@ export default function TeamsManagement() {
                         {team.name}
                       </span>
                       {team.description && (
-                        <p className="text-xs text-gray-500 truncate max-w-[200px]">
+                        <p className="text-xs text-gray-500 truncate max-w-50">
                           {team.description}
                         </p>
                       )}
