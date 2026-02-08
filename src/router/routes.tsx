@@ -15,6 +15,7 @@ import Favorites from "../pages/Favorites";
 import Teams from "../pages/Teams";
 import NotFound from "../pages/NotFound";
 import Notifications from "../pages/Notifications";
+import Drafts from "../pages/Drafts";
 
 // Admin Pages
 import {
@@ -87,7 +88,10 @@ export const router = createBrowserRouter([
         path: "notifications",
         element: <Notifications />,
       },
-
+      {
+        path: "drafts",
+        element: <Drafts />,
+      },
       // Admin Routes
       {
         path: "admin/users",

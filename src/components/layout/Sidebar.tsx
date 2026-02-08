@@ -19,8 +19,8 @@ export function Sidebar({
 
   const menuItems = [
     { id: "home", label: "Ana Sayfa", icon: "🏠" },
-    { id: "posts", label: "Postlar", icon: "📝" },
-    { id: "favorites", label: "Favorilerim", icon: "❤️" },
+    { id: "drafts", label: "Taslaklarım", icon: "📝" },
+    { id: "favorites", label: "Favorilerim", icon: "⭐" },
     { id: "teams", label: "Ekipler", icon: "👥" },
   ];
 
