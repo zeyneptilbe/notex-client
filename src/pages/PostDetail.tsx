@@ -9,6 +9,7 @@ import { formatDate } from "../utils/helpers";
 import { postsApi, type Post } from "../api/posts.api";
 import { commentsApi, type Comment } from "../api/comments.api";
 import { AttachmentList } from "../components/posts/AttachmentList";
+import { usePopularTags } from "../hooks/useTags";
 
 export default function PostDetail() {
   const { slug } = useParams<{ slug: string }>();
@@ -23,6 +24,9 @@ export default function PostDetail() {
   const [isLoading, setIsLoading] = useState(true);
   const [isSubmittingComment, setIsSubmittingComment] = useState(false);
   const [error, setError] = useState<string | null>(null);
+
+  const { data: popularTags } = usePopularTags(8);
+  const [authorPosts, setAuthorPosts] = useState<Post[]>([]);
 
   // Post verisini API'den çek
   useEffect(() => {
@@ -42,6 +46,16 @@ export default function PostDetail() {
           setComments(commentsData || []);
         } catch {
           setComments([]);
+        }
+
+        // Yazarin diger postlari
+        try {
+          const authorRes = await postsApi.getAll({ authorId: data.authorId, pageSize: 5 });
+          setAuthorPosts(
+            authorRes.items.filter((p) => p.id !== data.id).slice(0, 3),
+          );
+        } catch {
+          // sessizce gec
         }
       } catch (err) {
         console.error("Post yükleme hatası:", err);
@@ -296,7 +310,7 @@ export default function PostDetail() {
   }
 
   return (
-    <div className="max-w-4xl mx-auto">
+    <div>
       {/* Geri Butonu */}
       <button
         onClick={handleBack}
@@ -306,11 +320,14 @@ export default function PostDetail() {
         <span>Geri Dön</span>
       </button>
 
+      <div className="flex gap-6">
+      {/* Sol - Post İçeriği */}
+      <div className="flex-1 min-w-0">
       {/* Post Kartı */}
       <article className="bg-white rounded-xl shadow-sm border border-gray-100 overflow-hidden">
         {/* Header */}
-        <div className="p-6 border-b border-gray-100">
-          <h1 className="text-2xl font-bold text-gray-800 mb-4">
+        <div className="px-8 py-8 border-b border-gray-100">
+          <h1 className="text-3xl font-bold text-gray-800 mb-5">
             {post.title}
           </h1>
 
@@ -385,7 +402,7 @@ export default function PostDetail() {
         </div>
 
         {/* İçerik */}
-        <div className="p-6">
+        <div className="px-8 py-8">
           {/* Tags */}
           {post.tags && post.tags.length > 0 && (
             <div className="flex flex-wrap gap-2 mb-6">
@@ -402,25 +419,25 @@ export default function PostDetail() {
 
           {/* Özet */}
           {post.summary && (
-            <div className="mb-6 p-4 bg-gray-50 rounded-lg border-l-4 border-blue-500">
-              <p className="text-gray-700 italic">{post.summary}</p>
+            <div className="mb-8 p-5 bg-gray-50 rounded-lg border-l-4 border-blue-500">
+              <p className="text-gray-700 italic text-base leading-relaxed">{post.summary}</p>
             </div>
           )}
 
           {/* Post Content - Markdown Render */}
-          <div className="prose prose-gray max-w-none">
+          <div className="prose prose-lg prose-gray max-w-none">
             <MarkdownViewer content={post.content || ""} />
           </div>
 
           {/* Ekli Dosyalar */}
           {post.attachments && post.attachments.length > 0 && (
-            <div className="mt-8 pt-6 border-t border-gray-100">
+            <div className="mt-10 pt-6 border-t border-gray-100">
               <AttachmentList attachments={post.attachments} />
             </div>
           )}
 
           {/* İstatistikler */}
-          <div className="flex items-center gap-6 mt-8 pt-6 border-t border-gray-100 text-sm text-gray-500">
+          <div className="flex items-center gap-6 mt-10 pt-6 border-t border-gray-100 text-sm text-gray-500">
             <span className="flex items-center gap-1">
               <span>👁️</span>
               <span>{post.viewCount} görüntülenme</span>
@@ -438,7 +455,7 @@ export default function PostDetail() {
       </article>
 
       {/* Yorumlar */}
-      <section className="mt-6">
+      <section className="mt-8">
         <h2 className="text-xl font-bold text-gray-800 mb-4">
           Yorumlar ({comments.length})
         </h2>
@@ -623,6 +640,90 @@ export default function PostDetail() {
           </div>
         )}
       </section>
+      </div>
+
+      {/* Sag - Sidebar */}
+      <div className="hidden lg:block w-80 shrink-0 space-y-6">
+        {/* Post Bilgileri */}
+        <div className="bg-white rounded-xl shadow-sm border border-gray-100 p-5">
+          <h3 className="font-bold text-gray-800 mb-4 flex items-center gap-2">
+            📋 Post Bilgileri
+          </h3>
+          <div className="space-y-3 text-sm">
+            <div className="flex items-center justify-between">
+              <span className="text-gray-500">Kategori</span>
+              <span className="font-medium text-gray-700">
+                {post.categoryIcon} {post.categoryName || "Belirtilmemiş"}
+              </span>
+            </div>
+            <div className="flex items-center justify-between">
+              <span className="text-gray-500">Ekip</span>
+              <span className="font-medium text-gray-700">{post.teamName}</span>
+            </div>
+            <div className="flex items-center justify-between">
+              <span className="text-gray-500">Görüntülenme</span>
+              <span className="font-medium text-gray-700">{post.viewCount}</span>
+            </div>
+            <div className="flex items-center justify-between">
+              <span className="text-gray-500">Beğeni</span>
+              <span className="font-medium text-gray-700">{post.likeCount}</span>
+            </div>
+            <div className="flex items-center justify-between">
+              <span className="text-gray-500">Yorum</span>
+              <span className="font-medium text-gray-700">{post.commentCount}</span>
+            </div>
+          </div>
+        </div>
+
+        {/* Aynı Yazardan */}
+        {authorPosts.length > 0 && (
+          <div className="bg-white rounded-xl shadow-sm border border-gray-100 p-5">
+            <h3 className="font-bold text-gray-800 mb-4 flex items-center gap-2">
+              ✍️ {post.authorName} - Diger Yazilari
+            </h3>
+            <div className="space-y-3">
+              {authorPosts.map((p) => (
+                <div
+                  key={p.id}
+                  onClick={() => navigate(`/posts/${p.slug}`)}
+                  className="p-2.5 hover:bg-gray-50 rounded-lg cursor-pointer transition-colors"
+                >
+                  <p className="text-sm font-medium text-gray-800 line-clamp-2 mb-1">
+                    {p.title}
+                  </p>
+                  <div className="flex items-center gap-3 text-xs text-gray-400">
+                    <span>{formatDate(p.createdAt)}</span>
+                    <span>❤️ {p.likeCount}</span>
+                  </div>
+                </div>
+              ))}
+            </div>
+          </div>
+        )}
+
+        {/* Popüler Etiketler */}
+        {popularTags && popularTags.length > 0 && (
+          <div className="bg-white rounded-xl shadow-sm border border-gray-100 p-5">
+            <h3 className="font-bold text-gray-800 mb-4 flex items-center gap-2">
+              🔥 Popüler Etiketler
+            </h3>
+            <div className="flex flex-wrap gap-2">
+              {popularTags.map((tag) => (
+                <span
+                  key={tag.id}
+                  className="px-3 py-1.5 bg-gray-100 text-gray-600 text-sm rounded-lg hover:bg-gray-200 cursor-pointer transition-colors"
+                >
+                  #{tag.name}
+                  <span className="ml-1 text-gray-400 text-xs">
+                    {tag.usageCount}
+                  </span>
+                </span>
+              ))}
+            </div>
+          </div>
+        )}
+      </div>
+      </div>
     </div>
   );
 }
