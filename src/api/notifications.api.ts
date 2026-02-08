@@ -9,6 +9,7 @@ interface Notification {
   isRead: boolean;
   createdAt: string;
   actionUrl?: string;
+  triggeredByUserId?: string;
   triggeredByUserName?: string;
 }
 
