@@ -16,6 +16,7 @@ export default function TeamsManagement() {
   const [editingTeam, setEditingTeam] = useState<Team | null>(null);
   const [deletingTeam, setDeletingTeam] = useState<Team | null>(null);
   const [isSubmitting, setIsSubmitting] = useState(false);
+  const [deleteError, setDeleteError] = useState("");
   const [dropdownOpen, setDropdownOpen] = useState<string | null>(null);
   const [formData, setFormData] = useState({
     name: "",
@@ -105,17 +106,20 @@ export default function TeamsManagement() {
     if (!deletingTeam) return;
 
     setIsSubmitting(true);
+    setDeleteError("");
 
     try {
       await teamsApi.delete(deletingTeam.id);
       await refetch();
       setIsDeleteModalOpen(false);
       setDeletingTeam(null);
-    } catch (error) {
+    } catch (error: unknown) {
       console.error("Ekip silme hatası:", error);
-      alert(
-        "Ekip silinirken bir hata oluştu. Ekibe bağlı kullanıcılar olabilir.",
-      );
+      const err = error as { response?: { data?: unknown } };
+      const msg = typeof err.response?.data === "string"
+        ? err.response.data
+        : (err.response?.data as { message?: string })?.message || "Ekip silinirken bir hata oluştu.";
+      setDeleteError(msg);
     } finally {
       setIsSubmitting(false);
     }
@@ -347,10 +351,17 @@ export default function TeamsManagement() {
         onClose={() => {
           setIsDeleteModalOpen(false);
           setDeletingTeam(null);
+          setDeleteError("");
         }}
         title="Ekip Sil"
       >
         <div className="space-y-4">
+          {deleteError && (
+            <div className="p-3 bg-red-50 text-red-700 rounded-lg text-sm">
+              {deleteError}
+            </div>
+          )}
+
           <p className="text-gray-600">
             <span className="font-semibold text-gray-800">
               {deletingTeam?.name}

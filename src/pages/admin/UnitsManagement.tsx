@@ -14,6 +14,7 @@ export default function UnitsManagement() {
   const [editingUnit, setEditingUnit] = useState<Unit | null>(null);
   const [deletingUnit, setDeletingUnit] = useState<Unit | null>(null);
   const [isSubmitting, setIsSubmitting] = useState(false);
+  const [deleteError, setDeleteError] = useState("");
   const [dropdownOpen, setDropdownOpen] = useState<string | null>(null);
   const [formData, setFormData] = useState({
     name: "",
@@ -93,15 +94,20 @@ export default function UnitsManagement() {
     if (!deletingUnit) return;
 
     setIsSubmitting(true);
+    setDeleteError("");
 
     try {
       await unitsApi.delete(deletingUnit.id);
       await refetch();
       setIsDeleteModalOpen(false);
       setDeletingUnit(null);
-    } catch (error) {
+    } catch (error: unknown) {
       console.error("Birim silme hatası:", error);
-      alert("Birim silinirken bir hata oluştu. Birime bağlı ekipler olabilir.");
+      const err = error as { response?: { data?: unknown } };
+      const msg = typeof err.response?.data === "string"
+        ? err.response.data
+        : (err.response?.data as { message?: string })?.message || "Birim silinirken bir hata oluştu.";
+      setDeleteError(msg);
     } finally {
       setIsSubmitting(false);
     }
@@ -299,10 +305,17 @@ export default function UnitsManagement() {
         onClose={() => {
           setIsDeleteModalOpen(false);
           setDeletingUnit(null);
+          setDeleteError("");
         }}
         title="Birim Sil"
       >
         <div className="space-y-4">
+          {deleteError && (
+            <div className="p-3 bg-red-50 text-red-700 rounded-lg text-sm">
+              {deleteError}
+            </div>
+          )}
+
           <p className="text-gray-600">
             <span className="font-semibold text-gray-800">
               {deletingUnit?.name}

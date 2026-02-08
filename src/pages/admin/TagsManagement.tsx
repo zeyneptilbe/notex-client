@@ -17,6 +17,7 @@ export default function TagsManagement() {
   const [searchTerm, setSearchTerm] = useState("");
   const [tagName, setTagName] = useState("");
   const [error, setError] = useState("");
+  const [deleteError, setDeleteError] = useState("");
   const [dropdownOpen, setDropdownOpen] = useState<string | null>(null);
 
   const resetForm = () => {
@@ -87,15 +88,20 @@ export default function TagsManagement() {
     if (!deletingTag) return;
 
     setIsSubmitting(true);
+    setDeleteError("");
 
     try {
       await tagsApi.delete(deletingTag.id);
       await refetch();
       setIsDeleteModalOpen(false);
       setDeletingTag(null);
-    } catch (error) {
+    } catch (error: unknown) {
       console.error("Etiket silme hatası:", error);
-      alert("Etiket silinirken bir hata oluştu.");
+      const err = error as { response?: { data?: unknown } };
+      const msg = typeof err.response?.data === "string"
+        ? err.response.data
+        : (err.response?.data as { message?: string })?.message || "Etiket silinirken bir hata oluştu.";
+      setDeleteError(msg);
     } finally {
       setIsSubmitting(false);
     }
@@ -322,10 +328,17 @@ export default function TagsManagement() {
         onClose={() => {
           setIsDeleteModalOpen(false);
           setDeletingTag(null);
+          setDeleteError("");
         }}
         title="Etiket Sil"
       >
         <div className="space-y-4">
+          {deleteError && (
+            <div className="p-3 bg-red-50 text-red-700 rounded-lg text-sm">
+              {deleteError}
+            </div>
+          )}
+
           <p className="text-gray-600">
             <span className="font-semibold text-gray-800">
               #{deletingTag?.name}

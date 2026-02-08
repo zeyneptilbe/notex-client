@@ -41,6 +41,7 @@ export default function CategoriesManagement() {
     null,
   );
   const [isSubmitting, setIsSubmitting] = useState(false);
+  const [deleteError, setDeleteError] = useState("");
   const [dropdownOpen, setDropdownOpen] = useState<string | null>(null);
   const [formData, setFormData] = useState({
     name: "",
@@ -127,17 +128,20 @@ export default function CategoriesManagement() {
     if (!deletingCategory) return;
 
     setIsSubmitting(true);
+    setDeleteError("");
 
     try {
       await categoriesApi.delete(deletingCategory.id);
       await refetch();
       setIsDeleteModalOpen(false);
       setDeletingCategory(null);
-    } catch (error) {
+    } catch (error: unknown) {
       console.error("Kategori silme hatası:", error);
-      alert(
-        "Kategori silinirken bir hata oluştu. Kategoriye ait postlar olabilir.",
-      );
+      const err = error as { response?: { data?: unknown } };
+      const msg = typeof err.response?.data === "string"
+        ? err.response.data
+        : (err.response?.data as { message?: string })?.message || "Kategori silinirken bir hata oluştu.";
+      setDeleteError(msg);
     } finally {
       setIsSubmitting(false);
     }
@@ -343,10 +347,17 @@ export default function CategoriesManagement() {
         onClose={() => {
           setIsDeleteModalOpen(false);
           setDeletingCategory(null);
+          setDeleteError("");
         }}
         title="Kategori Sil"
       >
         <div className="space-y-4">
+          {deleteError && (
+            <div className="p-3 bg-red-50 text-red-700 rounded-lg text-sm">
+              {deleteError}
+            </div>
+          )}
+
           <p className="text-gray-600">
             <span className="font-semibold text-gray-800">
               {deletingCategory?.name}
