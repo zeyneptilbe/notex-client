@@ -8,6 +8,7 @@ import { MarkdownViewer } from "../components/common";
 import { formatDate } from "../utils/helpers";
 import { postsApi, type Post } from "../api/posts.api";
 import { commentsApi, type Comment } from "../api/comments.api";
+import { AttachmentList } from "../components/posts/AttachmentList";
 
 export default function PostDetail() {
   const { slug } = useParams<{ slug: string }>();
@@ -410,6 +411,13 @@ export default function PostDetail() {
           <div className="prose prose-gray max-w-none">
             <MarkdownViewer content={post.content || ""} />
           </div>
+
+          {/* Ekli Dosyalar */}
+          {post.attachments && post.attachments.length > 0 && (
+            <div className="mt-8 pt-6 border-t border-gray-100">
+              <AttachmentList attachments={post.attachments} />
+            </div>
+          )}
 
           {/* İstatistikler */}
           <div className="flex items-center gap-6 mt-8 pt-6 border-t border-gray-100 text-sm text-gray-500">
