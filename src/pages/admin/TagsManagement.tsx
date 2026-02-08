@@ -180,9 +180,9 @@ export default function TagsManagement() {
       </div>
 
       {/* Etiket Listesi */}
-      <div className="bg-white rounded-xl shadow-sm border border-gray-100 overflow-hidden">
+      <div className="bg-white rounded-xl shadow-sm border border-gray-100">
         <table className="w-full">
-          <thead className="bg-gray-50 border-b border-gray-100">
+          <thead className="bg-gray-50 border-b border-gray-100 rounded-t-xl overflow-hidden">
             <tr>
               <th className="text-left px-6 py-4 text-sm font-semibold text-gray-600">
                 Etiket
