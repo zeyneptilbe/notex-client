@@ -14,6 +14,7 @@ export function MainLayout() {
     if (path === "/" || path === "/posts") return "home";
     if (path === "/favorites") return "favorites";
     if (path === "/teams") return "teams";
+    if (path === "/drafts") return "drafts";
     if (path.startsWith("/admin/users")) return "admin-users";
     if (path.startsWith("/admin/categories")) return "admin-categories";
     if (path.startsWith("/admin/tags")) return "admin-tags";
@@ -35,6 +36,9 @@ export function MainLayout() {
         break;
       case "teams":
         navigate("/teams");
+        break;
+      case "drafts":
+        navigate("/drafts");
         break;
       case "admin-users":
         navigate("/admin/users");
