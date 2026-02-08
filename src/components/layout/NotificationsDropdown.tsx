@@ -44,17 +44,41 @@ export function NotificationsDropdown() {
     return () => document.removeEventListener("mousedown", handleClickOutside);
   }, []);
 
+  const getNavigationUrl = (notification: {
+    type: number;
+    actionUrl?: string;
+    triggeredByUserId?: string;
+  }): string | null => {
+    if (notification.actionUrl) {
+      if (notification.actionUrl.startsWith("/users/")) {
+        const userId = notification.actionUrl.replace("/users/", "");
+        return `/profile/${userId}`;
+      }
+      return notification.actionUrl.startsWith("/")
+        ? notification.actionUrl
+        : `/${notification.actionUrl}`;
+    }
+    // Takipci bildirimi (type: 4) - profil sayfasina yonlendir
+    if (notification.type === 4 && notification.triggeredByUserId) {
+      return `/profile/${notification.triggeredByUserId}`;
+    }
+    return null;
+  };
+
   const handleNotificationClick = (notification: {
     id: string;
+    type: number;
     isRead: boolean;
     actionUrl?: string;
+    triggeredByUserId?: string;
   }) => {
     if (!notification.isRead) {
       markAsReadMutation.mutate(notification.id);
     }
 
-    if (notification.actionUrl) {
-      navigate(notification.actionUrl);
+    const url = getNavigationUrl(notification);
+    if (url) {
+      navigate(url);
     }
 
     setIsOpen(false);
