@@ -29,6 +29,15 @@ export interface Post {
   tags: string[];
   isLiked: boolean;
   isFavorited: boolean;
+  attachments?: PostAttachment[];
+}
+
+export interface PostAttachment {
+  id: string;
+  fileName: string;
+  originalFileName: string;
+  fileSize: number;
+  contentType: string;
 }
 
 interface PostListResponse {
@@ -128,5 +137,40 @@ export const postsApi = {
       `${config.endpoints.interactions}/favorites`,
     );
     return response.data.items;
+  },
+};
+
+export const attachmentsApi = {
+  upload: async (
+    postId: string,
+    file: File,
+    onProgress?: (percent: number) => void,
+  ): Promise<PostAttachment> => {
+    const formData = new FormData();
+    formData.append("file", file);
+
+    const response = await api.post<PostAttachment>(
+      `${config.endpoints.posts}/${postId}/attachments`,
+      formData,
+      {
+        headers: { "Content-Type": "multipart/form-data" },
+        onUploadProgress: (event) => {
+          if (onProgress && event.total) {
+            onProgress(Math.round((event.loaded * 100) / event.total));
+          }
+        },
+      },
+    );
+    return response.data;
+  },
+
+  download: (id: string) => {
+    const token = localStorage.getItem(config.tokenKey);
+    const url = `${config.apiUrl}/attachments/${id}/download`;
+    window.open(`${url}?access_token=${token}`, "_blank");
+  },
+
+  delete: async (id: string): Promise<void> => {
+    await api.delete(`/attachments/${id}`);
   },
 };

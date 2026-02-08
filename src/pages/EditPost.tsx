@@ -5,8 +5,10 @@ import { Input } from "../components/common/Input";
 import { Loading } from "../components/common/Loading";
 import { useCategories } from "../hooks/useCategories";
 import { useTags } from "../hooks/useTags";
-import { postsApi } from "../api/posts.api";
+import { postsApi, attachmentsApi, type PostAttachment } from "../api/posts.api";
 import { MarkdownEditor } from "../components/common";
+import { FileUpload } from "../components/posts/FileUpload";
+import { AttachmentList } from "../components/posts/AttachmentList";
 
 export default function EditPost() {
   const { slug } = useParams<{ slug: string }>();
@@ -25,6 +27,10 @@ export default function EditPost() {
   const [isLoading, setIsLoading] = useState(true);
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [errors, setErrors] = useState<Record<string, string>>({});
+  const [attachments, setAttachments] = useState<PostAttachment[]>([]);
+  const [pendingFiles, setPendingFiles] = useState<File[]>([]);
+  const [isUploading, setIsUploading] = useState(false);
+  const [deletingAttachment, setDeletingAttachment] = useState<string | null>(null);
 
   // Post verisini API'den çek
   useEffect(() => {
@@ -42,6 +48,7 @@ export default function EditPost() {
         setSelectedTags(post.tags?.map((t) => t.toLowerCase()) || []);
         setVisibility(post.visibility);
         setStatus(post.status);
+        setAttachments(post.attachments || []);
       } catch (error) {
         console.error("Post yükleme hatası:", error);
         setErrors({ load: "Post yüklenirken bir hata oluştu." });
@@ -85,6 +92,36 @@ export default function EditPost() {
 
     setErrors(newErrors);
     return Object.keys(newErrors).length === 0;
+  };
+
+  const handleUploadFiles = async () => {
+    if (pendingFiles.length === 0 || !postId) return;
+
+    setIsUploading(true);
+    try {
+      for (const file of pendingFiles) {
+        const uploaded = await attachmentsApi.upload(postId, file);
+        setAttachments((prev) => [...prev, uploaded]);
+      }
+      setPendingFiles([]);
+    } catch (error) {
+      console.error("Dosya yukleme hatasi:", error);
+      setErrors((prev) => ({ ...prev, upload: "Dosya yuklenirken bir hata olustu." }));
+    } finally {
+      setIsUploading(false);
+    }
+  };
+
+  const handleDeleteAttachment = async (id: string) => {
+    setDeletingAttachment(id);
+    try {
+      await attachmentsApi.delete(id);
+      setAttachments((prev) => prev.filter((a) => a.id !== id));
+    } catch (error) {
+      console.error("Dosya silme hatasi:", error);
+    } finally {
+      setDeletingAttachment(null);
+    }
   };
 
   const handleSubmit = async (e: React.FormEvent) => {
@@ -337,6 +374,46 @@ export default function EditPost() {
               </p>
             )}
           </div>
+        </div>
+
+        {/* Dosyalar */}
+        <div className="bg-white rounded-xl shadow-sm border border-gray-100 p-6">
+          <h2 className="text-lg font-semibold text-gray-800 mb-4">Dosyalar</h2>
+
+          {/* Mevcut dosyalar */}
+          {attachments.length > 0 && (
+            <div className="mb-4">
+              <AttachmentList
+                attachments={attachments}
+                onDelete={handleDeleteAttachment}
+                deleting={deletingAttachment}
+              />
+            </div>
+          )}
+
+          {/* Yeni dosya ekleme */}
+          <FileUpload
+            files={pendingFiles}
+            onFilesChange={setPendingFiles}
+            disabled={isSubmitting || isUploading}
+          />
+
+          {pendingFiles.length > 0 && (
+            <div className="mt-3">
+              <Button
+                type="button"
+                onClick={handleUploadFiles}
+                loading={isUploading}
+                disabled={isSubmitting}
+              >
+                Dosyalari Yukle
+              </Button>
+            </div>
+          )}
+
+          {errors.upload && (
+            <p className="mt-2 text-sm text-red-600">{errors.upload}</p>
+          )}
         </div>
 
         {/* Butonlar */}

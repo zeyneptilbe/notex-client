@@ -17,6 +17,15 @@ export const PostVisibility = {
 export type PostVisibility =
   (typeof PostVisibility)[keyof typeof PostVisibility];
 
+// Attachment
+export interface PostAttachment {
+  id: string;
+  fileName: string;
+  originalFileName: string;
+  fileSize: number;
+  contentType: string;
+}
+
 // Entities
 export interface Post {
   id: string;
@@ -46,6 +55,7 @@ export interface Post {
   tags: string[];
   isLiked: boolean;
   isFavorited: boolean;
+  attachments?: PostAttachment[];
 }
 
 // Responses

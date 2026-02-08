@@ -4,8 +4,9 @@ import { Button } from "../components/common/Button";
 import { Input } from "../components/common/Input";
 import { useCategories } from "../hooks/useCategories";
 import { useTags } from "../hooks/useTags";
-import { postsApi } from "../api/posts.api";
+import { postsApi, attachmentsApi } from "../api/posts.api";
 import { MarkdownEditor } from "../components/common";
+import { FileUpload } from "../components/posts/FileUpload";
 
 export default function CreatePost() {
   const navigate = useNavigate();
@@ -21,6 +22,7 @@ export default function CreatePost() {
   const [status, setStatus] = useState(1);
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [errors, setErrors] = useState<Record<string, string>>({});
+  const [pendingFiles, setPendingFiles] = useState<File[]>([]);
 
   const handleSelectTag = (tagName: string) => {
     const tag = tagName.toLowerCase();
@@ -76,7 +78,13 @@ export default function CreatePost() {
 
       console.log("Creating post:", postData);
 
-      await postsApi.create(postData);
+      const createdPost = await postsApi.create(postData);
+
+      // Dosyaları yükle
+      for (const file of pendingFiles) {
+        await attachmentsApi.upload(createdPost.id, file);
+      }
+
       navigate("/");
     } catch (error) {
       console.error("Post oluşturma hatası:", error);
@@ -288,6 +296,18 @@ export default function CreatePost() {
               </p>
             )}
           </div>
+        </div>
+
+        {/* Dosya Yükleme */}
+        <div className="bg-white rounded-xl shadow-sm border border-gray-100 p-6">
+          <h2 className="text-lg font-semibold text-gray-800 mb-4">
+            Dosya Ekle
+          </h2>
+          <FileUpload
+            files={pendingFiles}
+            onFilesChange={setPendingFiles}
+            disabled={isSubmitting}
+          />
         </div>
 
         {/* Butonlar */}
