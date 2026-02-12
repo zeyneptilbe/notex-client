@@ -20,6 +20,7 @@ export function MainLayout() {
     if (path.startsWith("/admin/tags")) return "admin-tags";
     if (path.startsWith("/admin/units")) return "admin-units";
     if (path.startsWith("/admin/teams")) return "admin-teams";
+    if (path.startsWith("/admin/roles")) return "admin-roles";
     return "home";
   };
 
@@ -54,6 +55,9 @@ export function MainLayout() {
         break;
       case "admin-teams":
         navigate("/admin/teams");
+        break;
+      case "admin-roles":
+        navigate("/admin/roles");
         break;
       default:
         if (menu.startsWith("category-")) {

@@ -1,5 +1,6 @@
 import axios from "axios";
 import { config } from "../config";
+import { showToast } from "../components/common/Toast";
 
 const api = axios.create({
   baseURL: config.apiUrl,
@@ -29,6 +30,13 @@ api.interceptors.response.use(
   async (error) => {
     const originalRequest = error.config;
 
+    // 403 = Token geçerli ama izin yok → token yenileme yapma
+    if (error.response?.status === 403) {
+      showToast("Bu işlem için yetkiniz bulunmuyor.", "warning");
+      return Promise.reject(error);
+    }
+
+    // 401 = Token geçersiz/süresi dolmuş → token yenile
     if (error.response?.status === 401 && !originalRequest._retry) {
       originalRequest._retry = true;
 
@@ -57,5 +65,9 @@ api.interceptors.response.use(
     return Promise.reject(error);
   }
 );
+
+export function isForbiddenError(error: unknown): boolean {
+  return (error as { response?: { status?: number } })?.response?.status === 403;
+}
 
 export default api;

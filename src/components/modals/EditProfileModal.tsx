@@ -3,6 +3,7 @@ import { Modal } from "../common/Modal";
 import { Input } from "../common/Input";
 import { Button } from "../common/Button";
 import { usersApi, type UpdateProfileRequest } from "../../api/users.api";
+import { isForbiddenError } from "../../api/axios";
 
 interface EditProfileModalProps {
   isOpen: boolean;
@@ -71,8 +72,10 @@ export function EditProfileModal({
       onSuccess();
       onClose();
     } catch (error) {
-      console.error("Profil güncelleme hatası:", error);
-      setErrors({ submit: "Profil güncellenirken bir hata oluştu." });
+      if (!isForbiddenError(error)) {
+        console.error("Profil güncelleme hatası:", error);
+        setErrors({ submit: "Profil güncellenirken bir hata oluştu." });
+      }
     } finally {
       setIsSubmitting(false);
     }

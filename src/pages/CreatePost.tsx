@@ -5,6 +5,7 @@ import { Input } from "../components/common/Input";
 import { useCategories } from "../hooks/useCategories";
 import { useTags } from "../hooks/useTags";
 import { postsApi, attachmentsApi } from "../api/posts.api";
+import { isForbiddenError } from "../api/axios";
 import { MarkdownEditor } from "../components/common";
 import { FileUpload } from "../components/posts/FileUpload";
 
@@ -87,8 +88,10 @@ export default function CreatePost() {
 
       navigate("/");
     } catch (error) {
-      console.error("Post oluşturma hatası:", error);
-      setErrors({ submit: "Post oluşturulurken bir hata oluştu." });
+      if (!isForbiddenError(error)) {
+        console.error("Post oluşturma hatası:", error);
+        setErrors({ submit: "Post oluşturulurken bir hata oluştu." });
+      }
     } finally {
       setIsSubmitting(false);
     }

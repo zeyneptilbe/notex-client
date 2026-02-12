@@ -6,11 +6,15 @@ import { Loading } from "../../components/common/Loading";
 import { useTeams } from "../../hooks/useTeams";
 import { useUnits } from "../../hooks/useUnits";
 import { teamsApi } from "../../api/teams.api";
+import { isForbiddenError } from "../../api/axios";
+import { useAuth } from "../../hooks/useAuth";
+import { showToast } from "../../components/common/Toast";
 import type { Team } from "../../api/teams.api";
 
 export default function TeamsManagement() {
   const { data: teams, isLoading, refetch } = useTeams();
   const { data: units } = useUnits();
+  const { hasPermission } = useAuth();
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [isDeleteModalOpen, setIsDeleteModalOpen] = useState(false);
   const [editingTeam, setEditingTeam] = useState<Team | null>(null);
@@ -61,6 +65,12 @@ export default function TeamsManagement() {
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
 
+    const perm = editingTeam ? "teams.update" : "teams.create";
+    if (!hasPermission(perm)) {
+      showToast("Bu işlem için yetkiniz bulunmuyor.", "warning");
+      return;
+    }
+
     if (!formData.name.trim()) {
       alert("Ekip adı zorunludur");
       return;
@@ -76,7 +86,6 @@ export default function TeamsManagement() {
     try {
       if (editingTeam) {
         await teamsApi.update(editingTeam.id, {
-          id: editingTeam.id,
           name: formData.name,
           description: formData.description || undefined,
           code: formData.code || undefined,
@@ -95,8 +104,10 @@ export default function TeamsManagement() {
       setIsModalOpen(false);
       resetForm();
     } catch (error) {
-      console.error("Ekip kaydetme hatası:", error);
-      alert("Ekip kaydedilirken bir hata oluştu");
+      if (!isForbiddenError(error)) {
+        console.error("Ekip kaydetme hatası:", error);
+        alert("Ekip kaydedilirken bir hata oluştu");
+      }
     } finally {
       setIsSubmitting(false);
     }
@@ -104,6 +115,11 @@ export default function TeamsManagement() {
 
   const handleDelete = async () => {
     if (!deletingTeam) return;
+
+    if (!hasPermission("teams.delete")) {
+      showToast("Bu işlem için yetkiniz bulunmuyor.", "warning");
+      return;
+    }
 
     setIsSubmitting(true);
     setDeleteError("");
@@ -114,12 +130,14 @@ export default function TeamsManagement() {
       setIsDeleteModalOpen(false);
       setDeletingTeam(null);
     } catch (error: unknown) {
-      console.error("Ekip silme hatası:", error);
-      const err = error as { response?: { data?: unknown } };
-      const msg = typeof err.response?.data === "string"
-        ? err.response.data
-        : (err.response?.data as { message?: string })?.message || "Ekip silinirken bir hata oluştu.";
-      setDeleteError(msg);
+      if (!isForbiddenError(error)) {
+        console.error("Ekip silme hatası:", error);
+        const err = error as { response?: { data?: unknown } };
+        const msg = typeof err.response?.data === "string"
+          ? err.response.data
+          : (err.response?.data as { message?: string })?.message || "Ekip silinirken bir hata oluştu.";
+        setDeleteError(msg);
+      }
     } finally {
       setIsSubmitting(false);
     }

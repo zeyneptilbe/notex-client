@@ -10,7 +10,8 @@ export interface User {
   title?: string;
   profileImageUrl?: string;
   bio?: string;
-  role: number;
+  roleId: string;
+  roleName: string;
   teamId: string;
   teamName: string;
   unitName: string;
@@ -36,7 +37,7 @@ interface CreateUserRequest {
   email: string;
   password: string;
   teamId: string;
-  role: number;
+  roleId: string;
   title?: string;
 }
 
@@ -92,8 +93,8 @@ export const usersApi = {
     });
   },
 
-  updateRole: async (id: string, role: number): Promise<void> => {
-    await api.put(`${config.endpoints.users}/${id}/role`, { role });
+  updateRole: async (id: string, roleId: string): Promise<void> => {
+    await api.put(`${config.endpoints.users}/${id}/role`, { roleId });
   },
 
   follow: async (id: string): Promise<{ isFollowing: boolean }> => {

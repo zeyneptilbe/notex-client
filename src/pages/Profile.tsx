@@ -173,17 +173,7 @@ export default function Profile() {
     );
   }
 
-  const getRoleBadge = (role: number) => {
-    const roles: Record<number, { label: string; color: string }> = {
-      0: { label: "Çalışan", color: "bg-gray-100 text-gray-700" },
-      1: { label: "Takım Lideri", color: "bg-blue-100 text-blue-700" },
-      2: { label: "Birim Yöneticisi", color: "bg-purple-100 text-purple-700" },
-      3: { label: "Sistem Yöneticisi", color: "bg-red-100 text-red-700" },
-    };
-    return roles[role] || roles[0];
-  };
-
-  const roleBadge = getRoleBadge(user.role);
+  const roleName = user.roleName || "Kullanıcı";
 
   // User objesini düzenleme için hazırla
   const userForEdit = {
@@ -218,9 +208,9 @@ export default function Profile() {
                   {user.fullName}
                 </h1>
                 <span
-                  className={`px-2 py-1 text-xs font-medium rounded-full ${roleBadge.color} w-fit`}
+                  className="px-2 py-1 text-xs font-medium rounded-full bg-blue-100 text-blue-700 w-fit"
                 >
-                  {roleBadge.label}
+                  {roleName}
                 </span>
               </div>
               {user.title && (

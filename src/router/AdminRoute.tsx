@@ -6,9 +6,9 @@ interface AdminRouteProps {
 }
 
 export function AdminRoute({ children }: AdminRouteProps) {
-  const { isSuperAdmin } = useAuth();
+  const { hasPermission } = useAuth();
 
-  if (!isSuperAdmin) {
+  if (!hasPermission("admin.access")) {
     return (
       <div className="text-center py-12">
         <span className="text-4xl mb-4 block">🔒</span>

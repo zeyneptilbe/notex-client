@@ -7,23 +7,13 @@ import { Loading } from "../../components/common/Loading";
 import { Avatar } from "../../components/common/Avatar";
 import { useUsers, useCreateUser } from "../../hooks/useUsers";
 import { useTeams } from "../../hooks/useTeams";
-
-const ROLE_LABELS: Record<number, string> = {
-  0: "Çalışan",
-  1: "Takım Lideri",
-  2: "Birim Yöneticisi",
-  3: "Sistem Yöneticisi",
-};
-
-const ROLE_COLORS: Record<number, string> = {
-  0: "bg-gray-100 text-gray-700",
-  1: "bg-blue-100 text-blue-700",
-  2: "bg-purple-100 text-purple-700",
-  3: "bg-red-100 text-red-700",
-};
+import { useRoles } from "../../hooks/useRoles";
+import { useAuth } from "../../hooks/useAuth";
+import { showToast } from "../../components/common/Toast";
 
 export default function UsersManagement() {
   const navigate = useNavigate();
+  const { hasPermission } = useAuth();
   const [searchTerm, setSearchTerm] = useState("");
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [formData, setFormData] = useState({
@@ -32,13 +22,14 @@ export default function UsersManagement() {
     email: "",
     password: "",
     teamId: "",
-    role: 0,
+    roleId: "",
     title: "",
   });
   const [formErrors, setFormErrors] = useState<Record<string, string>>({});
 
   const { data: usersData, isLoading } = useUsers({ searchTerm });
   const { data: teams } = useTeams();
+  const { data: roles } = useRoles();
   const createUserMutation = useCreateUser();
 
   const handleOpenModal = () => {
@@ -48,7 +39,7 @@ export default function UsersManagement() {
       email: "",
       password: "",
       teamId: "",
-      role: 0,
+      roleId: "",
       title: "",
     });
     setFormErrors({});
@@ -69,6 +60,7 @@ export default function UsersManagement() {
       errors.password = "Şifre en az 6 karakter olmalıdır";
     }
     if (!formData.teamId) errors.teamId = "Ekip seçimi zorunludur";
+    if (!formData.roleId) errors.roleId = "Rol seçimi zorunludur";
 
     setFormErrors(errors);
     return Object.keys(errors).length === 0;
@@ -76,6 +68,11 @@ export default function UsersManagement() {
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
+
+    if (!hasPermission("users.create")) {
+      showToast("Bu işlem için yetkiniz bulunmuyor.", "warning");
+      return;
+    }
 
     if (!validateForm()) return;
 
@@ -170,10 +167,8 @@ export default function UsersManagement() {
                   {user.teamName}
                 </td>
                 <td className="px-6 py-4">
-                  <span
-                    className={`px-2 py-1 text-xs font-medium rounded-full ${ROLE_COLORS[user.role]}`}
-                  >
-                    {ROLE_LABELS[user.role]}
+                  <span className="px-2 py-1 text-xs font-medium rounded-full bg-blue-100 text-blue-700">
+                    {user.roleName}
                   </span>
                 </td>
                 <td className="px-6 py-4 text-sm text-gray-500">
@@ -286,17 +281,24 @@ export default function UsersManagement() {
               Rol
             </label>
             <select
-              value={formData.role}
+              value={formData.roleId}
               onChange={(e) =>
-                setFormData({ ...formData, role: Number(e.target.value) })
+                setFormData({ ...formData, roleId: e.target.value })
               }
-              className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
+              className={`w-full px-4 py-3 border rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 ${
+                formErrors.roleId ? "border-red-500" : "border-gray-300"
+              }`}
             >
-              <option value={0}>Çalışan</option>
-              <option value={1}>Takım Lideri</option>
-              <option value={2}>Birim Yöneticisi</option>
-              <option value={3}>Sistem Yöneticisi</option>
+              <option value="">Rol seçin...</option>
+              {roles?.map((role) => (
+                <option key={role.id} value={role.id}>
+                  {role.name}
+                </option>
+              ))}
             </select>
+            {formErrors.roleId && (
+              <p className="mt-1 text-sm text-red-600">{formErrors.roleId}</p>
+            )}
           </div>
 
           <div className="flex justify-end gap-3 pt-4">

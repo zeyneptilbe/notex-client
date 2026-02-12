@@ -1,11 +1,14 @@
 import { useState, useEffect } from "react";
-import { useParams, useNavigate } from "react-router-dom";
+import { useParams, useNavigate, useSearchParams } from "react-router-dom";
 import { Button } from "../components/common/Button";
 import { Input } from "../components/common/Input";
 import { Loading } from "../components/common/Loading";
 import { useCategories } from "../hooks/useCategories";
 import { useTags } from "../hooks/useTags";
 import { postsApi, attachmentsApi, type PostAttachment } from "../api/posts.api";
+import { isForbiddenError } from "../api/axios";
+import { showToast } from "../components/common/Toast";
+import { useAuth } from "../hooks/useAuth";
 import { MarkdownEditor } from "../components/common";
 import { FileUpload } from "../components/posts/FileUpload";
 import { AttachmentList } from "../components/posts/AttachmentList";
@@ -13,6 +16,8 @@ import { AttachmentList } from "../components/posts/AttachmentList";
 export default function EditPost() {
   const { slug } = useParams<{ slug: string }>();
   const navigate = useNavigate();
+  const [searchParams] = useSearchParams();
+  const { hasPermission, user } = useAuth();
   const { data: categories } = useCategories();
   const { data: allTags } = useTags();
 
@@ -40,6 +45,13 @@ export default function EditPost() {
       setIsLoading(true);
       try {
         const post = await postsApi.getBySlug(slug);
+        const isOwner = post.authorId === user?.id;
+        const perm = isOwner ? "posts.update" : "posts.updateOthers";
+        if (!hasPermission(perm)) {
+          showToast("Bu postu düzenleme yetkiniz bulunmuyor.", "warning");
+          navigate("/");
+          return;
+        }
         setPostId(post.id);
         setTitle(post.title);
         setSummary(post.summary || "");
@@ -47,11 +59,13 @@ export default function EditPost() {
         setCategoryId(post.categoryId || "");
         setSelectedTags(post.tags?.map((t) => t.toLowerCase()) || []);
         setVisibility(post.visibility);
-        setStatus(post.status);
+        setStatus(searchParams.get("publish") === "true" ? 1 : post.status);
         setAttachments(post.attachments || []);
       } catch (error) {
-        console.error("Post yükleme hatası:", error);
-        setErrors({ load: "Post yüklenirken bir hata oluştu." });
+        if (!isForbiddenError(error)) {
+          console.error("Post yükleme hatası:", error);
+          setErrors({ load: "Post yüklenirken bir hata oluştu." });
+        }
       } finally {
         setIsLoading(false);
       }
@@ -150,8 +164,10 @@ export default function EditPost() {
       // Başarılı - post detay sayfasına dön
       navigate(`/posts/${slug}`);
     } catch (error) {
-      console.error("Post güncelleme hatası:", error);
-      setErrors({ submit: "Post güncellenirken bir hata oluştu." });
+      if (!isForbiddenError(error)) {
+        console.error("Post güncelleme hatası:", error);
+        setErrors({ submit: "Post güncellenirken bir hata oluştu." });
+      }
     } finally {
       setIsSubmitting(false);
     }

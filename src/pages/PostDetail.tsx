@@ -10,11 +10,13 @@ import { postsApi, type Post } from "../api/posts.api";
 import { commentsApi, type Comment } from "../api/comments.api";
 import { AttachmentList } from "../components/posts/AttachmentList";
 import { usePopularTags } from "../hooks/useTags";
+import { isForbiddenError } from "../api/axios";
+import { showToast } from "../components/common/Toast";
 
 export default function PostDetail() {
   const { slug } = useParams<{ slug: string }>();
   const navigate = useNavigate();
-  const { user } = useAuth();
+  const { user, hasPermission } = useAuth();
 
   const [post, setPost] = useState<Post | null>(null);
   const [comments, setComments] = useState<Comment[]>([]);
@@ -73,11 +75,22 @@ export default function PostDetail() {
   };
 
   const handleEdit = () => {
+    const perm = isOwner ? "posts.update" : "posts.updateOthers";
+    if (!hasPermission(perm)) {
+      showToast("Bu işlem için yetkiniz bulunmuyor.", "warning");
+      return;
+    }
     navigate(`/posts/${post?.slug}/edit`);
   };
 
   const handleDelete = async () => {
     if (!post) return;
+
+    const perm = isOwner ? "posts.delete" : "posts.deleteOthers";
+    if (!hasPermission(perm)) {
+      showToast("Bu işlem için yetkiniz bulunmuyor.", "warning");
+      return;
+    }
 
     const confirmed = window.confirm(
       "Bu postu silmek istediğinize emin misiniz?",
@@ -88,8 +101,10 @@ export default function PostDetail() {
       await postsApi.delete(post.id);
       navigate("/");
     } catch (err) {
-      console.error("Post silme hatası:", err);
-      alert("Post silinirken bir hata oluştu.");
+      if (!isForbiddenError(err)) {
+        console.error("Post silme hatası:", err);
+        alert("Post silinirken bir hata oluştu.");
+      }
     }
   };
 
@@ -142,8 +157,10 @@ export default function PostDetail() {
         commentCount: post.commentCount + 1,
       });
     } catch (err) {
-      console.error("Yorum ekleme hatası:", err);
-      alert("Yorum eklenirken bir hata oluştu.");
+      if (!isForbiddenError(err)) {
+        console.error("Yorum ekleme hatası:", err);
+        alert("Yorum eklenirken bir hata oluştu.");
+      }
     } finally {
       setIsSubmittingComment(false);
     }
@@ -182,8 +199,10 @@ export default function PostDetail() {
         commentCount: post.commentCount + 1,
       });
     } catch (err) {
-      console.error("Yanıt ekleme hatası:", err);
-      alert("Yanıt eklenirken bir hata oluştu.");
+      if (!isForbiddenError(err)) {
+        console.error("Yanıt ekleme hatası:", err);
+        alert("Yanıt eklenirken bir hata oluştu.");
+      }
     } finally {
       setIsSubmittingComment(false);
     }
@@ -191,6 +210,11 @@ export default function PostDetail() {
 
   // Yorum sil
   const handleDeleteComment = async (commentId: string, parentId?: string) => {
+    if (!hasPermission("comments.delete") && !hasPermission("comments.deleteOthers")) {
+      showToast("Bu işlem için yetkiniz bulunmuyor.", "warning");
+      return;
+    }
+
     const confirmed = window.confirm(
       "Bu yorumu silmek istediğinize emin misiniz?",
     );
@@ -223,8 +247,10 @@ export default function PostDetail() {
         });
       }
     } catch (err) {
-      console.error("Yorum silme hatası:", err);
-      alert("Yorum silinirken bir hata oluştu.");
+      if (!isForbiddenError(err)) {
+        console.error("Yorum silme hatası:", err);
+        alert("Yorum silinirken bir hata oluştu.");
+      }
     }
   };
 

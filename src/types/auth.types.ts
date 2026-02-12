@@ -15,7 +15,9 @@ export interface CurrentUser {
   firstName?: string;
   lastName?: string;
   fullName: string;
-  role: number;
+  roleId: string;
+  roleName: string;
+  permissions: string[];
   teamId: string;
   teamName: string;
   unitName: string;

@@ -14,7 +14,7 @@ export function Sidebar({
   activeMenu,
   onMenuChange,
 }: SidebarProps) {
-  const { isSuperAdmin } = useAuth();
+  const { hasPermission } = useAuth();
   const { data: categories } = useCategories();
 
   const menuItems = [
@@ -26,6 +26,7 @@ export function Sidebar({
 
   const adminMenuItems = [
     { id: "admin-users", label: "Kullanıcılar", icon: "👤" },
+    { id: "admin-roles", label: "Roller", icon: "🛡️" },
     { id: "admin-categories", label: "Kategoriler", icon: "📁" },
     { id: "admin-tags", label: "Etiketler", icon: "🏷️" },
     { id: "admin-units", label: "Birimler", icon: "🏢" },
@@ -120,7 +121,7 @@ export function Sidebar({
           )}
 
           {/* Admin Menü */}
-          {isSuperAdmin && (
+          {hasPermission("admin.access") && (
             <div>
               <h3 className="px-3 text-xs font-semibold text-gray-400 uppercase tracking-wider mb-2">
                 Yönetim

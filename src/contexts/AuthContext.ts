@@ -7,7 +7,9 @@ export interface CurrentUser {
   firstName: string;
   lastName: string;
   fullName: string;
-  role: number;
+  roleId: string;
+  roleName: string;
+  permissions: string[];
   teamId: string;
   teamName: string;
   unitName: string;
@@ -32,8 +34,7 @@ export interface AuthContextType {
   login: (data: LoginRequest) => Promise<void>;
   logout: () => void;
   isSuperAdmin: boolean;
-  isTeamLead: boolean;
-  isUnitManager: boolean;
+  hasPermission: (permission: string) => boolean;
   refreshUser: () => Promise<void>;
 }
 
