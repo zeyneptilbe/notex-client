@@ -322,7 +322,7 @@ export default function PostDetail() {
   // Hata
   if (error || !post) {
     return (
-      <div className="max-w-4xl mx-auto text-center py-12">
+      <div className="text-center py-12">
         <span className="text-5xl mb-4 block">😕</span>
         <h2 className="text-xl font-bold text-gray-800 mb-2">
           Post Bulunamadı
