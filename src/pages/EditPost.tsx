@@ -185,7 +185,7 @@ export default function EditPost() {
   // Yükleme hatası
   if (errors.load) {
     return (
-      <div className="max-w-4xl mx-auto text-center py-12">
+      <div className="text-center py-12">
         <span className="text-5xl mb-4 block">😕</span>
         <h2 className="text-xl font-bold text-gray-800 mb-2">Hata</h2>
         <p className="text-gray-600 mb-4">{errors.load}</p>
@@ -195,7 +195,7 @@ export default function EditPost() {
   }
 
   return (
-    <div className="max-w-4xl mx-auto">
+    <div>
       {/* Header */}
       <div className="flex items-center justify-between mb-6">
         <div className="flex items-center gap-4">

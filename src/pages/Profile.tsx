@@ -16,7 +16,7 @@ export default function Profile() {
   const { id } = useParams<{ id: string }>();
   const navigate = useNavigate();
   const { user: currentUser, refreshUser } = useAuth();
-  const [activeTab, setActiveTab] = useState<"posts" | "favorites" | "about">(
+  const [activeTab, setActiveTab] = useState<"posts" | "favorites">(
     "posts",
   );
   const [isEditModalOpen, setIsEditModalOpen] = useState(false);
@@ -188,7 +188,7 @@ export default function Profile() {
   const totalLikes = userPosts.reduce((sum, post) => sum + post.likeCount, 0);
 
   return (
-    <div className="max-w-4xl mx-auto">
+    <div>
       {/* Profil Kartı */}
       <div className="bg-white rounded-xl shadow-sm border border-gray-100 overflow-hidden mb-6">
         {/* Cover Image */}
@@ -293,171 +293,181 @@ export default function Profile() {
         </div>
       </div>
 
-      {/* Tabs */}
-      <div className="bg-white rounded-xl shadow-sm border border-gray-100 overflow-hidden">
-        {/* Tab Headers */}
-        <div className="flex border-b border-gray-100">
-          <button
-            onClick={() => setActiveTab("posts")}
-            className={`flex-1 px-4 py-3 text-sm font-medium transition-colors ${
-              activeTab === "posts"
-                ? "text-blue-600 border-b-2 border-blue-600 bg-blue-50"
-                : "text-gray-600 hover:bg-gray-50"
-            }`}
-          >
-            📝 Postlar ({userPosts.length})
-          </button>
-          {isOwnProfile && (
-            <button
-              onClick={() => setActiveTab("favorites")}
-              className={`flex-1 px-4 py-3 text-sm font-medium transition-colors ${
-                activeTab === "favorites"
-                  ? "text-blue-600 border-b-2 border-blue-600 bg-blue-50"
-                  : "text-gray-600 hover:bg-gray-50"
-              }`}
-            >
-              ⭐ Favoriler ({userFavorites.length})
-            </button>
-          )}
-          <button
-            onClick={() => setActiveTab("about")}
-            className={`flex-1 px-4 py-3 text-sm font-medium transition-colors ${
-              activeTab === "about"
-                ? "text-blue-600 border-b-2 border-blue-600 bg-blue-50"
-                : "text-gray-600 hover:bg-gray-50"
-            }`}
-          >
-            ℹ️ Hakkında
-          </button>
-        </div>
+      {/* İçerik: Sol Postlar/Favoriler + Sağ Hakkında */}
+      <div className="flex gap-6">
+        {/* Sol - Postlar / Favoriler */}
+        <div className="flex-1">
+          {/* Tab Headers */}
+          <div className="bg-white rounded-xl shadow-sm border border-gray-100 overflow-hidden">
+            <div className="flex border-b border-gray-100">
+              <button
+                onClick={() => setActiveTab("posts")}
+                className={`flex-1 px-4 py-3 text-sm font-medium transition-colors ${
+                  activeTab === "posts"
+                    ? "text-blue-600 border-b-2 border-blue-600 bg-blue-50"
+                    : "text-gray-600 hover:bg-gray-50"
+                }`}
+              >
+                📝 Postlar ({userPosts.length})
+              </button>
+              {isOwnProfile && (
+                <button
+                  onClick={() => setActiveTab("favorites")}
+                  className={`flex-1 px-4 py-3 text-sm font-medium transition-colors ${
+                    activeTab === "favorites"
+                      ? "text-blue-600 border-b-2 border-blue-600 bg-blue-50"
+                      : "text-gray-600 hover:bg-gray-50"
+                  }`}
+                >
+                  ⭐ Favoriler ({userFavorites.length})
+                </button>
+              )}
+            </div>
 
-        {/* Tab Content */}
-        <div className="p-6">
-          {activeTab === "posts" && (
-            <div>
-              {isLoadingPosts ? (
-                <Loading text="Postlar yükleniyor..." />
-              ) : userPosts.length > 0 ? (
-                <PostList
-                  posts={userPosts.map((post) => ({
-                    id: post.id,
-                    slug: post.slug,
-                    title: post.title,
-                    summary: post.summary,
-                    authorName: post.authorName,
-                    authorProfileImage: post.authorProfileImage,
-                    teamName: post.teamName,
-                    createdAt: post.createdAt,
-                    likeCount: post.likeCount,
-                    commentCount: post.commentCount,
-                    viewCount: post.viewCount,
-                    categoryName: post.categoryName,
-                    categoryColor: post.categoryColor,
-                    categoryIcon: post.categoryIcon,
-                    tags: post.tags || [],
-                    isPinned: post.isPinned,
-                    isLiked: post.isLiked,
-                    isFavorited: post.isFavorited,
-                  }))}
-                  onPostClick={handlePostClick}
-                  onLike={handleLike}
-                  onFavorite={handleFavorite}
-                  emptyMessage="Henüz post paylaşılmamış."
-                />
-              ) : (
-                <div className="text-center py-8">
-                  <span className="text-4xl mb-2 block">📝</span>
-                  <p className="text-gray-500">Henüz post paylaşılmamış.</p>
-                  {isOwnProfile && (
-                    <Button
-                      className="mt-4"
-                      onClick={() => navigate("/posts/new")}
-                    >
-                      İlk Postunu Paylaş
-                    </Button>
+            {/* Tab Content */}
+            <div className="p-6">
+              {activeTab === "posts" && (
+                <div>
+                  {isLoadingPosts ? (
+                    <Loading text="Postlar yükleniyor..." />
+                  ) : userPosts.length > 0 ? (
+                    <PostList
+                      posts={userPosts.map((post) => ({
+                        id: post.id,
+                        slug: post.slug,
+                        title: post.title,
+                        summary: post.summary,
+                        authorName: post.authorName,
+                        authorProfileImage: post.authorProfileImage,
+                        teamName: post.teamName,
+                        createdAt: post.createdAt,
+                        likeCount: post.likeCount,
+                        commentCount: post.commentCount,
+                        viewCount: post.viewCount,
+                        categoryName: post.categoryName,
+                        categoryColor: post.categoryColor,
+                        categoryIcon: post.categoryIcon,
+                        tags: post.tags || [],
+                        isPinned: post.isPinned,
+                        isLiked: post.isLiked,
+                        isFavorited: post.isFavorited,
+                      }))}
+                      onPostClick={handlePostClick}
+                      onLike={handleLike}
+                      onFavorite={handleFavorite}
+                      emptyMessage="Henüz post paylaşılmamış."
+                    />
+                  ) : (
+                    <div className="text-center py-8">
+                      <span className="text-4xl mb-2 block">📝</span>
+                      <p className="text-gray-500">Henüz post paylaşılmamış.</p>
+                      {isOwnProfile && (
+                        <Button
+                          className="mt-4"
+                          onClick={() => navigate("/posts/new")}
+                        >
+                          İlk Postunu Paylaş
+                        </Button>
+                      )}
+                    </div>
+                  )}
+                </div>
+              )}
+
+              {activeTab === "favorites" && isOwnProfile && (
+                <div>
+                  {isLoadingFavorites ? (
+                    <Loading text="Favoriler yükleniyor..." />
+                  ) : userFavorites.length > 0 ? (
+                    <PostList
+                      posts={userFavorites.map((post) => ({
+                        id: post.id,
+                        slug: post.slug,
+                        title: post.title,
+                        summary: post.summary,
+                        authorName: post.authorName,
+                        authorProfileImage: post.authorProfileImage,
+                        teamName: post.teamName,
+                        createdAt: post.createdAt,
+                        likeCount: post.likeCount,
+                        commentCount: post.commentCount,
+                        viewCount: post.viewCount,
+                        categoryName: post.categoryName,
+                        categoryColor: post.categoryColor,
+                        categoryIcon: post.categoryIcon,
+                        tags: post.tags || [],
+                        isPinned: post.isPinned,
+                        isLiked: post.isLiked,
+                        isFavorited: true,
+                      }))}
+                      onPostClick={handlePostClick}
+                      onLike={handleLike}
+                      onFavorite={handleFavorite}
+                      emptyMessage="Henüz favori post yok."
+                    />
+                  ) : (
+                    <div className="text-center py-8">
+                      <span className="text-4xl mb-2 block">⭐</span>
+                      <p className="text-gray-500">Henüz favori post yok.</p>
+                      <Button className="mt-4" onClick={() => navigate("/")}>
+                        Postları Keşfet
+                      </Button>
+                    </div>
                   )}
                 </div>
               )}
             </div>
-          )}
+          </div>
+        </div>
 
-          {activeTab === "favorites" && isOwnProfile && (
-            <div>
-              {isLoadingFavorites ? (
-                <Loading text="Favoriler yükleniyor..." />
-              ) : userFavorites.length > 0 ? (
-                <PostList
-                  posts={userFavorites.map((post) => ({
-                    id: post.id,
-                    slug: post.slug,
-                    title: post.title,
-                    summary: post.summary,
-                    authorName: post.authorName,
-                    authorProfileImage: post.authorProfileImage,
-                    teamName: post.teamName,
-                    createdAt: post.createdAt,
-                    likeCount: post.likeCount,
-                    commentCount: post.commentCount,
-                    viewCount: post.viewCount,
-                    categoryName: post.categoryName,
-                    categoryColor: post.categoryColor,
-                    categoryIcon: post.categoryIcon,
-                    tags: post.tags || [],
-                    isPinned: post.isPinned,
-                    isLiked: post.isLiked,
-                    isFavorited: true,
-                  }))}
-                  onPostClick={handlePostClick}
-                  onLike={handleLike}
-                  onFavorite={handleFavorite}
-                  emptyMessage="Henüz favori post yok."
-                />
-              ) : (
-                <div className="text-center py-8">
-                  <span className="text-4xl mb-2 block">⭐</span>
-                  <p className="text-gray-500">Henüz favori post yok.</p>
-                  <Button className="mt-4" onClick={() => navigate("/")}>
-                    Postları Keşfet
-                  </Button>
+        {/* Sağ - Hakkında Sidebar */}
+        <div className="hidden lg:block w-80 space-y-6">
+          {/* Hakkında */}
+          <div className="bg-white rounded-xl shadow-sm border border-gray-100 p-5">
+            <h3 className="font-bold text-gray-800 mb-4 flex items-center gap-2">
+              ℹ️ Hakkında
+            </h3>
+            <div className="space-y-4">
+              {user.bio && (
+                <div>
+                  <h4 className="text-xs font-semibold text-gray-500 uppercase mb-1">Bio</h4>
+                  <p className="text-sm text-gray-700">{user.bio}</p>
                 </div>
               )}
-            </div>
-          )}
-
-          {activeTab === "about" && (
-            <div className="space-y-4">
               <div>
-                <h3 className="font-semibold text-gray-800 mb-2">Bio</h3>
-                <p className="text-gray-600">
-                  {user.bio || "Henüz bio eklenmemiş."}
-                </p>
+                <h4 className="text-xs font-semibold text-gray-500 uppercase mb-1">Ünvan</h4>
+                <p className="text-sm text-gray-700">{user.title || "Belirtilmemiş"}</p>
               </div>
               <div>
-                <h3 className="font-semibold text-gray-800 mb-2">Ünvan</h3>
-                <p className="text-gray-600">{user.title || "Belirtilmemiş"}</p>
+                <h4 className="text-xs font-semibold text-gray-500 uppercase mb-1">Ekip</h4>
+                <p className="text-sm text-gray-700">{user.teamName}</p>
               </div>
               <div>
-                <h3 className="font-semibold text-gray-800 mb-2">Ekip</h3>
-                <p className="text-gray-600">{user.teamName}</p>
+                <h4 className="text-xs font-semibold text-gray-500 uppercase mb-1">Birim</h4>
+                <p className="text-sm text-gray-700">{user.unitName}</p>
               </div>
               <div>
-                <h3 className="font-semibold text-gray-800 mb-2">Birim</h3>
-                <p className="text-gray-600">{user.unitName}</p>
-              </div>
-              <div>
-                <h3 className="font-semibold text-gray-800 mb-2">İletişim</h3>
-                <p className="text-gray-600">{user.email}</p>
+                <h4 className="text-xs font-semibold text-gray-500 uppercase mb-1">İletişim</h4>
+                <p className="text-sm text-gray-700">{user.email}</p>
               </div>
               {user.createdAt && (
                 <div>
-                  <h3 className="font-semibold text-gray-800 mb-2">
-                    Katılım Tarihi
-                  </h3>
-                  <p className="text-gray-600">{formatDate(user.createdAt)}</p>
+                  <h4 className="text-xs font-semibold text-gray-500 uppercase mb-1">Katılım Tarihi</h4>
+                  <p className="text-sm text-gray-700">{formatDate(user.createdAt)}</p>
                 </div>
               )}
             </div>
-          )}
+          </div>
+
+          {/* Rol Bilgisi */}
+          <div className="bg-white rounded-xl shadow-sm border border-gray-100 p-5">
+            <h3 className="font-bold text-gray-800 mb-4 flex items-center gap-2">
+              🛡️ Rol
+            </h3>
+            <span className="px-3 py-1.5 bg-blue-100 text-blue-700 text-sm font-medium rounded-full">
+              {roleName}
+            </span>
+          </div>
         </div>
       </div>
 
