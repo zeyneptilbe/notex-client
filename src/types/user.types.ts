@@ -1,14 +1,5 @@
 // user.types.ts
 
-export const UserRole = {
-  Employee: 0,
-  TeamLead: 1,
-  UnitManager: 2,
-  SuperAdmin: 3,
-} as const;
-
-export type UserRole = (typeof UserRole)[keyof typeof UserRole];
-
 export interface User {
   id: string;
   firstName: string;
@@ -18,7 +9,8 @@ export interface User {
   title?: string;
   profileImageUrl?: string;
   bio?: string;
-  role: UserRole;
+  roleId: string;
+  roleName: string;
   teamId: string;
   teamName: string;
   unitName: string;
@@ -37,6 +29,6 @@ export interface CreateUserRequest {
   email: string;
   password: string;
   teamId: string;
-  role: UserRole;
+  roleId: string;
   title?: string;
 }

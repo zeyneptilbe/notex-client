@@ -131,7 +131,7 @@ export function NotificationsDropdown() {
                   }`}
                 >
                   {/* İkon veya Avatar */}
-                  <div className="flex-shrink-0">
+                  <div className="shrink-0">
                     {notification.triggeredByUserName ? (
                       <Avatar
                         name={notification.triggeredByUserName}
@@ -161,7 +161,7 @@ export function NotificationsDropdown() {
 
                   {/* Okunmamış göstergesi */}
                   {!notification.isRead && (
-                    <div className="flex-shrink-0 w-2 h-2 bg-blue-500 rounded-full mt-2"></div>
+                    <div className="shrink-0 w-2 h-2 bg-blue-500 rounded-full mt-2"></div>
                   )}
                 </div>
               ))

@@ -8,12 +8,5 @@ export function useAuth(): AuthContextType {
     throw new Error("useAuth must be used within an AuthProvider");
   }
 
-  // Debug için
-  console.log("Auth Context:", {
-    user: context.user,
-    isSuperAdmin: context.isSuperAdmin,
-    role: context.user?.role,
-  });
-
   return context;
 }

@@ -5,6 +5,9 @@ import { Modal } from "../../components/common/Modal";
 import { Loading } from "../../components/common/Loading";
 import { useCategories } from "../../hooks/useCategories";
 import { categoriesApi } from "../../api/categories.api";
+import { isForbiddenError } from "../../api/axios";
+import { useAuth } from "../../hooks/useAuth";
+import { showToast } from "../../components/common/Toast";
 import type { Category } from "../../api/categories.api";
 
 const ICON_OPTIONS = [
@@ -34,6 +37,7 @@ const COLOR_OPTIONS = [
 
 export default function CategoriesManagement() {
   const { data: categories, isLoading, refetch } = useCategories();
+  const { hasPermission } = useAuth();
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [isDeleteModalOpen, setIsDeleteModalOpen] = useState(false);
   const [editingCategory, setEditingCategory] = useState<Category | null>(null);
@@ -86,6 +90,12 @@ export default function CategoriesManagement() {
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
 
+    const perm = editingCategory ? "categories.update" : "categories.create";
+    if (!hasPermission(perm)) {
+      showToast("Bu işlem için yetkiniz bulunmuyor.", "warning");
+      return;
+    }
+
     if (!formData.name.trim()) {
       alert("Kategori adı zorunludur");
       return;
@@ -117,8 +127,10 @@ export default function CategoriesManagement() {
       setIsModalOpen(false);
       resetForm();
     } catch (error) {
-      console.error("Kategori kaydetme hatası:", error);
-      alert("Kategori kaydedilirken bir hata oluştu");
+      if (!isForbiddenError(error)) {
+        console.error("Kategori kaydetme hatası:", error);
+        alert("Kategori kaydedilirken bir hata oluştu");
+      }
     } finally {
       setIsSubmitting(false);
     }
@@ -126,6 +138,11 @@ export default function CategoriesManagement() {
 
   const handleDelete = async () => {
     if (!deletingCategory) return;
+
+    if (!hasPermission("categories.delete")) {
+      showToast("Bu işlem için yetkiniz bulunmuyor.", "warning");
+      return;
+    }
 
     setIsSubmitting(true);
     setDeleteError("");
@@ -136,12 +153,14 @@ export default function CategoriesManagement() {
       setIsDeleteModalOpen(false);
       setDeletingCategory(null);
     } catch (error: unknown) {
-      console.error("Kategori silme hatası:", error);
-      const err = error as { response?: { data?: unknown } };
-      const msg = typeof err.response?.data === "string"
-        ? err.response.data
-        : (err.response?.data as { message?: string })?.message || "Kategori silinirken bir hata oluştu.";
-      setDeleteError(msg);
+      if (!isForbiddenError(error)) {
+        console.error("Kategori silme hatası:", error);
+        const err = error as { response?: { data?: unknown } };
+        const msg = typeof err.response?.data === "string"
+          ? err.response.data
+          : (err.response?.data as { message?: string })?.message || "Kategori silinirken bir hata oluştu.";
+        setDeleteError(msg);
+      }
     } finally {
       setIsSubmitting(false);
     }

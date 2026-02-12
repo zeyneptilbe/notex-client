@@ -5,10 +5,14 @@ import { Modal } from "../../components/common/Modal";
 import { Loading } from "../../components/common/Loading";
 import { useUnits } from "../../hooks/useUnits";
 import { unitsApi } from "../../api/units.api";
+import { isForbiddenError } from "../../api/axios";
+import { useAuth } from "../../hooks/useAuth";
+import { showToast } from "../../components/common/Toast";
 import type { Unit } from "../../api/units.api";
 
 export default function UnitsManagement() {
   const { data: units, isLoading, refetch } = useUnits();
+  const { hasPermission } = useAuth();
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [isDeleteModalOpen, setIsDeleteModalOpen] = useState(false);
   const [editingUnit, setEditingUnit] = useState<Unit | null>(null);
@@ -56,6 +60,12 @@ export default function UnitsManagement() {
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
 
+    const perm = editingUnit ? "units.update" : "units.create";
+    if (!hasPermission(perm)) {
+      showToast("Bu işlem için yetkiniz bulunmuyor.", "warning");
+      return;
+    }
+
     if (!formData.name.trim()) {
       alert("Birim adı zorunludur");
       return;
@@ -66,7 +76,6 @@ export default function UnitsManagement() {
     try {
       if (editingUnit) {
         await unitsApi.update(editingUnit.id, {
-          id: editingUnit.id,
           name: formData.name,
           description: formData.description || undefined,
           code: formData.code || undefined,
@@ -83,8 +92,10 @@ export default function UnitsManagement() {
       setIsModalOpen(false);
       resetForm();
     } catch (error) {
-      console.error("Birim kaydetme hatası:", error);
-      alert("Birim kaydedilirken bir hata oluştu");
+      if (!isForbiddenError(error)) {
+        console.error("Birim kaydetme hatası:", error);
+        alert("Birim kaydedilirken bir hata oluştu");
+      }
     } finally {
       setIsSubmitting(false);
     }
@@ -92,6 +103,11 @@ export default function UnitsManagement() {
 
   const handleDelete = async () => {
     if (!deletingUnit) return;
+
+    if (!hasPermission("units.delete")) {
+      showToast("Bu işlem için yetkiniz bulunmuyor.", "warning");
+      return;
+    }
 
     setIsSubmitting(true);
     setDeleteError("");
@@ -102,12 +118,14 @@ export default function UnitsManagement() {
       setIsDeleteModalOpen(false);
       setDeletingUnit(null);
     } catch (error: unknown) {
-      console.error("Birim silme hatası:", error);
-      const err = error as { response?: { data?: unknown } };
-      const msg = typeof err.response?.data === "string"
-        ? err.response.data
-        : (err.response?.data as { message?: string })?.message || "Birim silinirken bir hata oluştu.";
-      setDeleteError(msg);
+      if (!isForbiddenError(error)) {
+        console.error("Birim silme hatası:", error);
+        const err = error as { response?: { data?: unknown } };
+        const msg = typeof err.response?.data === "string"
+          ? err.response.data
+          : (err.response?.data as { message?: string })?.message || "Birim silinirken bir hata oluştu.";
+        setDeleteError(msg);
+      }
     } finally {
       setIsSubmitting(false);
     }

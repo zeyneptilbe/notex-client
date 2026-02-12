@@ -24,11 +24,10 @@ export interface CreateTeamRequest {
 }
 
 export interface UpdateTeamRequest {
-  id: string;
-  name: string;
+  name?: string;
   description?: string;
   code?: string;
-  unitId: string;
+  unitId?: string;
   displayOrder?: number;
 }
 

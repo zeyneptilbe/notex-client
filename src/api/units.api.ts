@@ -20,8 +20,7 @@ export interface CreateUnitRequest {
 }
 
 export interface UpdateUnitRequest {
-  id: string;
-  name: string;
+  name?: string;
   description?: string;
   code?: string;
   displayOrder?: number;

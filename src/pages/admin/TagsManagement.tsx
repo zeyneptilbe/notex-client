@@ -5,10 +5,14 @@ import { Modal } from "../../components/common/Modal";
 import { Loading } from "../../components/common/Loading";
 import { useTags } from "../../hooks/useTags";
 import { tagsApi } from "../../api/tags.api";
+import { isForbiddenError } from "../../api/axios";
+import { useAuth } from "../../hooks/useAuth";
+import { showToast } from "../../components/common/Toast";
 import type { Tag } from "../../api/tags.api";
 
 export default function TagsManagement() {
   const { data: tags, isLoading, refetch } = useTags();
+  const { hasPermission } = useAuth();
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [isDeleteModalOpen, setIsDeleteModalOpen] = useState(false);
   const [editingTag, setEditingTag] = useState<Tag | null>(null);
@@ -48,6 +52,12 @@ export default function TagsManagement() {
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
 
+    const perm = editingTag ? "tags.update" : "tags.create";
+    if (!hasPermission(perm)) {
+      showToast("Bu işlem için yetkiniz bulunmuyor.", "warning");
+      return;
+    }
+
     if (!tagName.trim()) {
       setError("Etiket adı zorunludur");
       return;
@@ -77,8 +87,10 @@ export default function TagsManagement() {
       setIsModalOpen(false);
       resetForm();
     } catch (err) {
-      console.error("Etiket kaydetme hatası:", err);
-      setError("Etiket kaydedilirken bir hata oluştu");
+      if (!isForbiddenError(err)) {
+        console.error("Etiket kaydetme hatası:", err);
+        setError("Etiket kaydedilirken bir hata oluştu");
+      }
     } finally {
       setIsSubmitting(false);
     }
@@ -86,6 +98,11 @@ export default function TagsManagement() {
 
   const handleDelete = async () => {
     if (!deletingTag) return;
+
+    if (!hasPermission("tags.delete")) {
+      showToast("Bu işlem için yetkiniz bulunmuyor.", "warning");
+      return;
+    }
 
     setIsSubmitting(true);
     setDeleteError("");
@@ -96,12 +113,14 @@ export default function TagsManagement() {
       setIsDeleteModalOpen(false);
       setDeletingTag(null);
     } catch (error: unknown) {
-      console.error("Etiket silme hatası:", error);
-      const err = error as { response?: { data?: unknown } };
-      const msg = typeof err.response?.data === "string"
-        ? err.response.data
-        : (err.response?.data as { message?: string })?.message || "Etiket silinirken bir hata oluştu.";
-      setDeleteError(msg);
+      if (!isForbiddenError(error)) {
+        console.error("Etiket silme hatası:", error);
+        const err = error as { response?: { data?: unknown } };
+        const msg = typeof err.response?.data === "string"
+          ? err.response.data
+          : (err.response?.data as { message?: string })?.message || "Etiket silinirken bir hata oluştu.";
+        setDeleteError(msg);
+      }
     } finally {
       setIsSubmitting(false);
     }

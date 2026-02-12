@@ -36,6 +36,12 @@ export default function Drafts() {
     }
   };
 
+  const handlePublish = (post: { slug?: string }) => {
+    if (post.slug) {
+      navigate(`/posts/${post.slug}/edit?publish=true`);
+    }
+  };
+
   if (isLoading) {
     return <Loading text="Taslaklar yükleniyor..." />;
   }
@@ -67,7 +73,6 @@ export default function Drafts() {
             Henüz yayınlanmamış postlarınız
           </p>
         </div>
-        <Button onClick={() => navigate("/posts/new")}>+ Yeni Post</Button>
       </div>
 
       {/* Taslak Listesi */}
@@ -137,7 +142,7 @@ export default function Drafts() {
                   <Button variant="secondary" onClick={() => handleEdit(draft)}>
                     ✏️ Düzenle
                   </Button>
-                  <Button variant="primary" onClick={() => handleEdit(draft)}>
+                  <Button variant="primary" onClick={() => handlePublish(draft)}>
                     🚀 Yayınla
                   </Button>
                 </div>
