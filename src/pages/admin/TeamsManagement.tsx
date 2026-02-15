@@ -40,11 +40,19 @@ export default function TeamsManagement() {
   };
 
   const openCreateModal = () => {
+    if (!hasPermission("teams.create")) {
+      showToast("Ekip oluşturma yetkiniz bulunmuyor.", "warning");
+      return;
+    }
     resetForm();
     setIsModalOpen(true);
   };
 
   const openEditModal = (team: Team) => {
+    if (!hasPermission("teams.update")) {
+      showToast("Ekip düzenleme yetkiniz bulunmuyor.", "warning");
+      return;
+    }
     setEditingTeam(team);
     setFormData({
       name: team.name,
@@ -57,6 +65,10 @@ export default function TeamsManagement() {
   };
 
   const openDeleteModal = (team: Team) => {
+    if (!hasPermission("teams.delete")) {
+      showToast("Ekip silme yetkiniz bulunmuyor.", "warning");
+      return;
+    }
     setDeletingTeam(team);
     setIsDeleteModalOpen(true);
     setDropdownOpen(null);

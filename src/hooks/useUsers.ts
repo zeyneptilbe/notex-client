@@ -23,6 +23,13 @@ export function useUser(id: string) {
   });
 }
 
+export function useTopAuthors(count: number = 5) {
+  return useQuery({
+    queryKey: ["users", "top-authors", count],
+    queryFn: () => usersApi.getTopAuthors(count),
+  });
+}
+
 export function useCreateUser() {
   const queryClient = useQueryClient();
 

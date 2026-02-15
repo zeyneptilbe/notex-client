@@ -33,6 +33,10 @@ export default function UsersManagement() {
   const createUserMutation = useCreateUser();
 
   const handleOpenModal = () => {
+    if (!hasPermission("users.create")) {
+      showToast("Kullanıcı oluşturma yetkiniz bulunmuyor.", "warning");
+      return;
+    }
     setFormData({
       firstName: "",
       lastName: "",

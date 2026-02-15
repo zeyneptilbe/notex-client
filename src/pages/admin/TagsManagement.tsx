@@ -31,11 +31,19 @@ export default function TagsManagement() {
   };
 
   const openCreateModal = () => {
+    if (!hasPermission("tags.create")) {
+      showToast("Etiket oluşturma yetkiniz bulunmuyor.", "warning");
+      return;
+    }
     resetForm();
     setIsModalOpen(true);
   };
 
   const openEditModal = (tag: Tag) => {
+    if (!hasPermission("tags.update")) {
+      showToast("Etiket düzenleme yetkiniz bulunmuyor.", "warning");
+      return;
+    }
     setEditingTag(tag);
     setTagName(tag.name);
     setError("");
@@ -44,6 +52,10 @@ export default function TagsManagement() {
   };
 
   const openDeleteModal = (tag: Tag) => {
+    if (!hasPermission("tags.delete")) {
+      showToast("Etiket silme yetkiniz bulunmuyor.", "warning");
+      return;
+    }
     setDeletingTag(tag);
     setIsDeleteModalOpen(true);
     setDropdownOpen(null);

@@ -81,6 +81,7 @@ export default function EditPost() {
     };
 
     fetchPost();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [slug]);
 
   const handleSelectTag = (tagName: string) => {

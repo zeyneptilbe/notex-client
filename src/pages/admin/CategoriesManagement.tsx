@@ -65,11 +65,19 @@ export default function CategoriesManagement() {
   };
 
   const openCreateModal = () => {
+    if (!hasPermission("categories.create")) {
+      showToast("Kategori oluşturma yetkiniz bulunmuyor.", "warning");
+      return;
+    }
     resetForm();
     setIsModalOpen(true);
   };
 
   const openEditModal = (category: Category) => {
+    if (!hasPermission("categories.update")) {
+      showToast("Kategori düzenleme yetkiniz bulunmuyor.", "warning");
+      return;
+    }
     setEditingCategory(category);
     setFormData({
       name: category.name,
@@ -82,6 +90,10 @@ export default function CategoriesManagement() {
   };
 
   const openDeleteModal = (category: Category) => {
+    if (!hasPermission("categories.delete")) {
+      showToast("Kategori silme yetkiniz bulunmuyor.", "warning");
+      return;
+    }
     setDeletingCategory(category);
     setIsDeleteModalOpen(true);
     setDropdownOpen(null);

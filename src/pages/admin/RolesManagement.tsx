@@ -37,6 +37,10 @@ export default function RolesManagement() {
   const deleteRoleMutation = useDeleteRole();
 
   const handleOpenCreate = () => {
+    if (!hasPermission("roles.manage")) {
+      showToast("Rol oluşturma yetkiniz bulunmuyor.", "warning");
+      return;
+    }
     setEditingRole(null);
     setFormData({ name: "", description: "", permissions: [] });
     setFormErrors({});
@@ -46,6 +50,10 @@ export default function RolesManagement() {
   const [isLoadingRole, setIsLoadingRole] = useState(false);
 
   const handleOpenEdit = async (role: Role) => {
+    if (!hasPermission("roles.manage")) {
+      showToast("Rol düzenleme yetkiniz bulunmuyor.", "warning");
+      return;
+    }
     setEditingRole(role);
     setFormErrors({});
     setIsLoadingRole(true);
@@ -78,6 +86,10 @@ export default function RolesManagement() {
   };
 
   const handleOpenDelete = (role: Role) => {
+    if (!hasPermission("roles.manage")) {
+      showToast("Rol silme yetkiniz bulunmuyor.", "warning");
+      return;
+    }
     setDeletingRole(role);
     setDeleteError(null);
     setIsDeleteModalOpen(true);

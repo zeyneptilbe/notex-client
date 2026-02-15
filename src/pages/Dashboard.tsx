@@ -1,17 +1,28 @@
 import { useState } from "react";
-import { useNavigate } from "react-router-dom";
+import { useNavigate, useSearchParams } from "react-router-dom";
+import { useQuery } from "@tanstack/react-query";
 import { PostList } from "../components/posts";
 import { Loading } from "../components/common";
+import { Avatar } from "../components/common/Avatar";
+import { postsApi } from "../api/posts.api";
 import { usePosts, useLikePost, useFavoritePost } from "../hooks/usePosts";
-import { useCategories } from "../hooks/useCategories";
 import { usePopularTags } from "../hooks/useTags";
+import { useTopAuthors } from "../hooks/useUsers";
+import { useCategories } from "../hooks/useCategories";
 
 type FeedTab = "all" | "following";
 
 export default function Dashboard() {
   const navigate = useNavigate();
+  const [searchParams, setSearchParams] = useSearchParams();
   const [sortBy, setSortBy] = useState("newest");
   const [activeTab, setActiveTab] = useState<FeedTab>("all");
+
+  const categoryId = searchParams.get("category") || undefined;
+  const { data: categories } = useCategories();
+  const selectedCategory = categoryId
+    ? categories?.find((c) => c.id === categoryId)
+    : undefined;
 
   // API'den veri çek
   const {
@@ -19,11 +30,16 @@ export default function Dashboard() {
     isLoading: postsLoading,
     error: postsError,
   } = usePosts({
+    categoryId,
     followingOnly: activeTab === "following" ? true : undefined,
-    sortBy: sortBy === "newest" ? undefined : sortBy === "popular" ? "MostViewed" : "MostLiked",
+    sortBy: sortBy === "newest" ? undefined : sortBy === "popular" ? "3" : "1",
   });
-  const { data: categories } = useCategories();
   const { data: popularTags } = usePopularTags(8);
+  const { data: topAuthors } = useTopAuthors(5);
+  const { data: trendingData } = useQuery({
+    queryKey: ["posts", "trending"],
+    queryFn: () => postsApi.getAll({ sortBy: "3", pageSize: 5 }),
+  });
 
   // Mutations
   const likeMutation = useLikePost();
@@ -117,6 +133,20 @@ export default function Dashboard() {
                 Takip Ettiklerim
               </button>
             </div>
+            {selectedCategory && (
+              <span className="flex items-center gap-1.5 px-3 py-1 bg-indigo-100 text-indigo-700 text-sm font-medium rounded-full">
+                {selectedCategory.icon} {selectedCategory.name}
+                <button
+                  onClick={() => {
+                    searchParams.delete("category");
+                    setSearchParams(searchParams);
+                  }}
+                  className="ml-0.5 text-indigo-400 hover:text-indigo-700"
+                >
+                  ✕
+                </button>
+              </span>
+            )}
             {postsData && (
               <span className="px-3 py-1 bg-blue-100 text-blue-600 text-sm font-medium rounded-full">
                 {postsData.totalCount} post
@@ -155,26 +185,68 @@ export default function Dashboard() {
       </div>
 
       {/* Sağ - Sidebar */}
-      <div className="hidden lg:block w-80 space-y-6">
-        {/* Kategoriler */}
-        {categories && categories.length > 0 && (
+      <div className="hidden lg:block w-80 space-y-5 sticky top-[84px] self-start">
+        {/* Popüler Yazarlar */}
+        {topAuthors && topAuthors.length > 0 && (
           <div className="bg-white rounded-xl shadow-sm border border-gray-100 p-5">
-            <h3 className="font-bold text-gray-800 mb-4 flex items-center gap-2">
-              📁 Kategoriler
+            <h3 className="font-bold text-gray-800 mb-4 flex items-center gap-2 text-sm">
+              ✍️ Popüler Yazarlar
             </h3>
-            <div className="space-y-2">
-              {categories.map((cat) => (
+            <div className="space-y-2.5">
+              {topAuthors.slice(0, 4).map((author) => (
                 <div
-                  key={cat.id}
-                  className="flex items-center justify-between p-2 hover:bg-gray-50 rounded-lg cursor-pointer transition-colors"
+                  key={author.id}
+                  onClick={() => navigate(`/profile/${author.id}`)}
+                  className="flex items-center gap-2.5 p-1.5 hover:bg-gray-50 rounded-lg cursor-pointer transition-colors"
                 >
-                  <span className="flex items-center gap-2 text-sm text-gray-600">
-                    <span>{cat.icon}</span>
-                    <span>{cat.name}</span>
+                  <Avatar
+                    name={author.fullName}
+                    imageUrl={author.profileImageUrl}
+                    size="sm"
+                  />
+                  <div className="flex-1 min-w-0">
+                    <p className="text-sm font-medium text-gray-800 truncate">
+                      {author.fullName}
+                    </p>
+                    <p className="text-xs text-gray-400">
+                      {author.teamName}
+                    </p>
+                  </div>
+                  <span className="text-xs text-blue-600 bg-blue-50 px-2 py-0.5 rounded-full shrink-0">
+                    {author.postCount} post
                   </span>
-                  <span className="text-xs text-gray-400 bg-gray-100 px-2 py-0.5 rounded-full">
-                    {cat.postCount}
+                </div>
+              ))}
+            </div>
+          </div>
+        )}
+
+        {/* En Çok Okunanlar */}
+        {trendingData?.items && trendingData.items.length > 0 && (
+          <div className="bg-white rounded-xl shadow-sm border border-gray-100 p-5">
+            <h3 className="font-bold text-gray-800 mb-4 flex items-center gap-2 text-sm">
+              📈 En Çok Okunan Postlar
+            </h3>
+            <div className="space-y-2.5">
+              {trendingData.items.slice(0, 5).map((post, idx) => (
+                <div
+                  key={post.id}
+                  onClick={() => navigate(`/posts/${post.slug || post.id}`)}
+                  className="flex gap-2.5 p-1.5 hover:bg-gray-50 rounded-lg cursor-pointer transition-colors"
+                >
+                  <span className="text-base font-bold text-gray-300 shrink-0 w-5 text-center">
+                    {idx + 1}
                   </span>
+                  <div className="flex-1 min-w-0">
+                    <p className="text-sm font-medium text-gray-800 line-clamp-1">
+                      {post.title}
+                    </p>
+                    <div className="flex items-center gap-1.5 text-xs text-gray-400">
+                      <span>{post.authorName}</span>
+                      <span>·</span>
+                      <span>👁️ {post.viewCount}</span>
+                    </div>
+                  </div>
                 </div>
               ))}
             </div>
@@ -184,14 +256,14 @@ export default function Dashboard() {
         {/* Popüler Etiketler */}
         {popularTags && popularTags.length > 0 && (
           <div className="bg-white rounded-xl shadow-sm border border-gray-100 p-5">
-            <h3 className="font-bold text-gray-800 mb-4 flex items-center gap-2">
+            <h3 className="font-bold text-gray-800 mb-4 flex items-center gap-2 text-sm">
               🔥 Popüler Etiketler
             </h3>
             <div className="flex flex-wrap gap-2">
               {popularTags.map((tag) => (
                 <span
                   key={tag.id}
-                  className="px-3 py-1.5 bg-gray-100 text-gray-600 text-sm rounded-lg hover:bg-gray-200 cursor-pointer transition-colors"
+                  className="px-2.5 py-1 bg-gray-100 text-gray-600 text-xs rounded-lg hover:bg-gray-200 cursor-pointer transition-colors"
                 >
                   #{tag.name}
                   <span className="ml-1 text-gray-400 text-xs">
@@ -202,17 +274,6 @@ export default function Dashboard() {
             </div>
           </div>
         )}
-
-        {/* Veriler yoksa placeholder */}
-        {(!categories || categories.length === 0) &&
-          (!popularTags || popularTags.length === 0) && (
-            <div className="bg-white rounded-xl shadow-sm border border-gray-100 p-5 text-center">
-              <span className="text-3xl mb-2 block">📭</span>
-              <p className="text-gray-500 text-sm">
-                Henüz kategori ve etiket eklenmemiş.
-              </p>
-            </div>
-          )}
       </div>
     </div>
   );

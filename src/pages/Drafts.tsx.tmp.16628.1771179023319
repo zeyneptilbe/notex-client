@@ -9,6 +9,7 @@ import { postsApi } from "../api/posts.api";
 import { useAuth } from "../hooks/useAuth";
 import { usePopularTags } from "../hooks/useTags";
 import { useTopAuthors } from "../hooks/useUsers";
+import { formatDate } from "../utils/helpers";
 
 export default function Drafts() {
   const navigate = useNavigate();
@@ -176,15 +177,15 @@ export default function Drafts() {
       </div>
 
       {/* Sağ - Sidebar */}
-      <div className="hidden lg:block w-80 space-y-5 sticky top-[84px] self-start">
+      <div className="hidden lg:block w-80 space-y-4 sticky top-[84px] self-start">
         {/* Popüler Yazarlar */}
         {topAuthors && topAuthors.length > 0 && (
-          <div className="bg-white rounded-xl shadow-sm border border-gray-100 p-5">
-            <h3 className="font-bold text-gray-800 mb-4 flex items-center gap-2 text-sm">
+          <div className="bg-white rounded-xl shadow-sm border border-gray-100 p-4">
+            <h3 className="font-bold text-gray-800 mb-3 flex items-center gap-2 text-sm">
               ✍️ Popüler Yazarlar
             </h3>
-            <div className="space-y-2.5">
-              {topAuthors.slice(0, 4).map((author) => (
+            <div className="space-y-2">
+              {topAuthors.slice(0, 3).map((author) => (
                 <div
                   key={author.id}
                   onClick={() => navigate(`/profile/${author.id}`)}
@@ -214,12 +215,12 @@ export default function Drafts() {
 
         {/* En Çok Okunan Postlar */}
         {trendingData?.items && trendingData.items.length > 0 && (
-          <div className="bg-white rounded-xl shadow-sm border border-gray-100 p-5">
-            <h3 className="font-bold text-gray-800 mb-4 flex items-center gap-2 text-sm">
+          <div className="bg-white rounded-xl shadow-sm border border-gray-100 p-4">
+            <h3 className="font-bold text-gray-800 mb-3 flex items-center gap-2 text-sm">
               📈 En Çok Okunan Postlar
             </h3>
-            <div className="space-y-2.5">
-              {trendingData.items.slice(0, 5).map((post, idx) => (
+            <div className="space-y-2">
+              {trendingData.items.slice(0, 4).map((post, idx) => (
                 <div
                   key={post.id}
                   onClick={() => navigate(`/posts/${post.slug || post.id}`)}
@@ -246,11 +247,11 @@ export default function Drafts() {
 
         {/* Popüler Etiketler */}
         {popularTags && popularTags.length > 0 && (
-          <div className="bg-white rounded-xl shadow-sm border border-gray-100 p-5">
-            <h3 className="font-bold text-gray-800 mb-4 flex items-center gap-2 text-sm">
+          <div className="bg-white rounded-xl shadow-sm border border-gray-100 p-4">
+            <h3 className="font-bold text-gray-800 mb-3 flex items-center gap-2 text-sm">
               🔥 Popüler Etiketler
             </h3>
-            <div className="flex flex-wrap gap-2">
+            <div className="flex flex-wrap gap-1.5">
               {popularTags.map((tag) => (
                 <span
                   key={tag.id}

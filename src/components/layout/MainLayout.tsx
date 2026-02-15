@@ -11,6 +11,9 @@ export function MainLayout() {
   // Aktif menüyü URL'den belirle
   const getActiveMenu = (): string => {
     const path = location.pathname;
+    const searchParams = new URLSearchParams(location.search);
+    const categoryParam = searchParams.get("category");
+    if (categoryParam && path === "/posts") return `category-${categoryParam}`;
     if (path === "/" || path === "/posts") return "home";
     if (path === "/favorites") return "favorites";
     if (path === "/teams") return "teams";
