@@ -6,6 +6,7 @@ import { useCategories } from "../hooks/useCategories";
 import { useTags } from "../hooks/useTags";
 import { postsApi, attachmentsApi } from "../api/posts.api";
 import { isForbiddenError } from "../api/axios";
+import { showToast } from "../components/common/Toast";
 import { MarkdownEditor } from "../components/common";
 import { FileUpload } from "../components/posts/FileUpload";
 
@@ -77,13 +78,15 @@ export default function CreatePost() {
         status,
       };
 
-      console.log("Creating post:", postData);
-
       const createdPost = await postsApi.create(postData);
 
       // Dosyaları yükle
       for (const file of pendingFiles) {
         await attachmentsApi.upload(createdPost.id, file);
+      }
+
+      if (createdPost.status === 3) {
+        showToast("Postunuz onay için gönderildi. Onaylandıktan sonra yayınlanacaktır.", "info");
       }
 
       navigate("/");

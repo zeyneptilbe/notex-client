@@ -21,6 +21,7 @@ export function MainLayout() {
     if (path.startsWith("/admin/units")) return "admin-units";
     if (path.startsWith("/admin/teams")) return "admin-teams";
     if (path.startsWith("/admin/roles")) return "admin-roles";
+    if (path.startsWith("/admin/pending-approval")) return "admin-pending-approval";
     return "home";
   };
 
@@ -58,6 +59,9 @@ export function MainLayout() {
         break;
       case "admin-roles":
         navigate("/admin/roles");
+        break;
+      case "admin-pending-approval":
+        navigate("/admin/pending-approval");
         break;
       default:
         if (menu.startsWith("category-")) {

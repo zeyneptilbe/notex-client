@@ -25,6 +25,7 @@ import {
   TeamsManagement,
   TagsManagement,
   RolesManagement,
+  PendingApproval,
 } from "../pages/admin";
 
 export const router = createBrowserRouter([
@@ -139,6 +140,14 @@ export const router = createBrowserRouter([
         element: (
           <AdminRoute>
             <RolesManagement />
+          </AdminRoute>
+        ),
+      },
+      {
+        path: "admin/pending-approval",
+        element: (
+          <AdminRoute>
+            <PendingApproval />
           </AdminRoute>
         ),
       },

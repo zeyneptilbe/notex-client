@@ -30,6 +30,10 @@ export interface Post {
   isLiked: boolean;
   isFavorited: boolean;
   attachments?: PostAttachment[];
+  reviewedByUserId?: string | null;
+  reviewedByName?: string | null;
+  reviewedAt?: string | null;
+  rejectionReason?: string | null;
 }
 
 export interface PostAttachment {
@@ -80,6 +84,31 @@ interface UpdatePostRequest {
   visibility: number;
   categoryId?: string;
   tags: string[];
+}
+
+export interface RevisionAttachment {
+  fileName: string;
+  originalFileName: string;
+  fileSize: number;
+  contentType: string;
+}
+
+export interface PostRevision {
+  id: string;
+  revisionNumber: number;
+  title: string;
+  content: string;
+  summary: string;
+  status: number;
+  visibility: number;
+  categoryId: string | null;
+  categoryName: string | null;
+  tags: string[];
+  attachments: RevisionAttachment[];
+  changeNote: string | null;
+  editedByUserId: string;
+  editedByName: string;
+  createdAt: string;
 }
 
 export const postsApi = {
@@ -137,6 +166,36 @@ export const postsApi = {
       `${config.endpoints.interactions}/favorites`,
     );
     return response.data.items;
+  },
+
+  getPendingApproval: async (params?: { pageNumber?: number; pageSize?: number }): Promise<PostListResponse> => {
+    const response = await api.get<PostListResponse>(
+      `${config.endpoints.posts}/pending-approval`,
+      { params },
+    );
+    return response.data;
+  },
+
+  approve: async (id: string): Promise<Post> => {
+    const response = await api.post<Post>(
+      `${config.endpoints.posts}/${id}/approve`,
+    );
+    return response.data;
+  },
+
+  reject: async (id: string, rejectionReason: string): Promise<Post> => {
+    const response = await api.post<Post>(
+      `${config.endpoints.posts}/${id}/reject`,
+      { rejectionReason },
+    );
+    return response.data;
+  },
+
+  getRevisions: async (postId: string): Promise<PostRevision[]> => {
+    const response = await api.get<PostRevision[]>(
+      `${config.endpoints.posts}/${postId}/revisions`,
+    );
+    return response.data;
   },
 };
 

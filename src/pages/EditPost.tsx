@@ -9,6 +9,7 @@ import { postsApi, attachmentsApi, type PostAttachment } from "../api/posts.api"
 import { isForbiddenError } from "../api/axios";
 import { showToast } from "../components/common/Toast";
 import { useAuth } from "../hooks/useAuth";
+import { formatDate } from "../utils/helpers";
 import { MarkdownEditor } from "../components/common";
 import { FileUpload } from "../components/posts/FileUpload";
 import { AttachmentList } from "../components/posts/AttachmentList";
@@ -36,6 +37,10 @@ export default function EditPost() {
   const [pendingFiles, setPendingFiles] = useState<File[]>([]);
   const [isUploading, setIsUploading] = useState(false);
   const [deletingAttachment, setDeletingAttachment] = useState<string | null>(null);
+  const [originalStatus, setOriginalStatus] = useState<number>(0);
+  const [rejectionReason, setRejectionReason] = useState<string | null>(null);
+  const [reviewedByName, setReviewedByName] = useState<string | null>(null);
+  const [reviewedAt, setReviewedAt] = useState<string | null>(null);
 
   // Post verisini API'den çek
   useEffect(() => {
@@ -59,8 +64,12 @@ export default function EditPost() {
         setCategoryId(post.categoryId || "");
         setSelectedTags(post.tags?.map((t) => t.toLowerCase()) || []);
         setVisibility(post.visibility);
+        setOriginalStatus(post.status);
         setStatus(searchParams.get("publish") === "true" ? 1 : post.status);
         setAttachments(post.attachments || []);
+        setRejectionReason(post.rejectionReason || null);
+        setReviewedByName(post.reviewedByName || null);
+        setReviewedAt(post.reviewedAt || null);
       } catch (error) {
         if (!isForbiddenError(error)) {
           console.error("Post yükleme hatası:", error);
@@ -157,9 +166,17 @@ export default function EditPost() {
         status,
       };
 
-      console.log("Updating post:", postData);
+      const updatedPost = await postsApi.update(postData);
 
-      await postsApi.update(postData);
+      if (updatedPost.status === 3) {
+        if (originalStatus === 1) {
+          showToast("Postunuz güncellendi ve tekrar onaya gönderildi.", "info");
+        } else if (originalStatus === 4) {
+          showToast("Postunuz tekrar onaya gönderildi. Onay bekleniyor.", "info");
+        } else {
+          showToast("Postunuz onay için gönderildi. Onaylandıktan sonra yayınlanacaktır.", "info");
+        }
+      }
 
       // Başarılı - post detay sayfasına dön
       navigate(`/posts/${slug}`);
@@ -209,6 +226,39 @@ export default function EditPost() {
           <h1 className="text-2xl font-bold text-gray-800">Post Düzenle</h1>
         </div>
       </div>
+
+      {/* Reddedildi Banner */}
+      {status === 4 && rejectionReason && (
+        <div className="mb-6 p-4 bg-red-50 border border-red-200 rounded-lg">
+          <div className="flex items-start gap-3">
+            <span className="text-xl">🚫</span>
+            <div>
+              <h3 className="font-semibold text-red-800 mb-1">Bu post reddedildi</h3>
+              <p className="text-sm text-red-700 mb-2">{rejectionReason}</p>
+              {reviewedByName && (
+                <p className="text-xs text-red-500">
+                  Reddeden: {reviewedByName}{reviewedAt ? ` - ${formatDate(reviewedAt)}` : ""}
+                </p>
+              )}
+              <p className="text-sm text-red-600 mt-2 font-medium">
+                Düzenleyip tekrar "Yayınla" olarak gönderebilirsiniz.
+              </p>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Onay Bekliyor Banner */}
+      {status === 3 && (
+        <div className="mb-6 p-4 bg-amber-50 border border-amber-200 rounded-lg">
+          <div className="flex items-center gap-3">
+            <span className="text-xl">⏳</span>
+            <p className="text-sm text-amber-800 font-medium">
+              Bu post onay bekliyor. Onaylandıktan sonra yayınlanacaktır.
+            </p>
+          </div>
+        </div>
+      )}
 
       {/* Genel Hata */}
       {errors.submit && (

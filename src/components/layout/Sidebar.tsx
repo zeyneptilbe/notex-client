@@ -25,6 +25,7 @@ export function Sidebar({
   ];
 
   const adminMenuItems = [
+    { id: "admin-pending-approval", label: "Onay Bekleyenler", icon: "⏳" },
     { id: "admin-users", label: "Kullanıcılar", icon: "👤" },
     { id: "admin-roles", label: "Roller", icon: "🛡️" },
     { id: "admin-categories", label: "Kategoriler", icon: "📁" },

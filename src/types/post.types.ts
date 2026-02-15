@@ -3,6 +3,8 @@ export const PostStatus = {
   Draft: 0,
   Published: 1,
   Archived: 2,
+  PendingApproval: 3,
+  Rejected: 4,
 } as const;
 
 export type PostStatus = (typeof PostStatus)[keyof typeof PostStatus];
@@ -56,6 +58,10 @@ export interface Post {
   isLiked: boolean;
   isFavorited: boolean;
   attachments?: PostAttachment[];
+  reviewedByUserId?: string | null;
+  reviewedByName?: string | null;
+  reviewedAt?: string | null;
+  rejectionReason?: string | null;
 }
 
 // Responses
