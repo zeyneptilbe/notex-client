@@ -9,9 +9,28 @@ import { isForbiddenError } from "../api/axios";
 import { showToast } from "../components/common/Toast";
 import { MarkdownEditor } from "../components/common";
 import { FileUpload } from "../components/posts/FileUpload";
+import { useAuth } from "../hooks/useAuth";
 
 export default function CreatePost() {
   const navigate = useNavigate();
+  const { hasPermission } = useAuth();
+
+  if (!hasPermission("posts.create")) {
+    return (
+      <div className="flex items-center justify-center py-20">
+        <div className="text-center">
+          <span className="text-5xl mb-4 block">🔒</span>
+          <h2 className="text-xl font-bold text-gray-800 mb-2">
+            Erişim Engellendi
+          </h2>
+          <p className="text-gray-600 mb-6">
+            Post oluşturma yetkiniz bulunmuyor.
+          </p>
+          <Button onClick={() => navigate("/")}>Ana Sayfaya Dön</Button>
+        </div>
+      </div>
+    );
+  }
   const { data: categories } = useCategories();
   const { data: allTags } = useTags();
 

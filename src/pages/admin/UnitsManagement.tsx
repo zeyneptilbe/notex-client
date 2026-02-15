@@ -36,11 +36,19 @@ export default function UnitsManagement() {
   };
 
   const openCreateModal = () => {
+    if (!hasPermission("units.create")) {
+      showToast("Birim oluşturma yetkiniz bulunmuyor.", "warning");
+      return;
+    }
     resetForm();
     setIsModalOpen(true);
   };
 
   const openEditModal = (unit: Unit) => {
+    if (!hasPermission("units.update")) {
+      showToast("Birim düzenleme yetkiniz bulunmuyor.", "warning");
+      return;
+    }
     setEditingUnit(unit);
     setFormData({
       name: unit.name,
@@ -52,6 +60,10 @@ export default function UnitsManagement() {
   };
 
   const openDeleteModal = (unit: Unit) => {
+    if (!hasPermission("units.delete")) {
+      showToast("Birim silme yetkiniz bulunmuyor.", "warning");
+      return;
+    }
     setDeletingUnit(unit);
     setIsDeleteModalOpen(true);
     setDropdownOpen(null);

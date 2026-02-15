@@ -226,7 +226,7 @@ export default function PostDetail() {
       });
 
       // Dosya varsa yükle (ayrı try/catch — yorum zaten oluştu)
-      let uploadedAttachments: CommentAttachment[] = [];
+      const uploadedAttachments: CommentAttachment[] = [];
       if (commentFiles.length > 0) {
         const results = await Promise.allSettled(
           commentFiles.map((file) =>
@@ -290,7 +290,7 @@ export default function PostDetail() {
       });
 
       // Dosya varsa yükle (ayrı try/catch — yanıt zaten oluştu)
-      let uploadedAttachments: CommentAttachment[] = [];
+      const uploadedAttachments: CommentAttachment[] = [];
       if (replyFiles.length > 0) {
         const results = await Promise.allSettled(
           replyFiles.map((file) =>
@@ -451,7 +451,6 @@ export default function PostDetail() {
   const handleDeleteAttachment = async (
     attachmentId: string,
     commentId: string,
-    _parentId?: string,
   ) => {
     setDeletingAttachment(attachmentId);
     try {
@@ -730,23 +729,23 @@ export default function PostDetail() {
                 {post.isFavorited ? "⭐" : "☆"}
               </button>
 
-              {isOwner && (
-                <>
-                  <button
-                    onClick={handleEdit}
-                    className="p-2 bg-blue-100 text-blue-600 rounded-lg hover:bg-blue-200 transition-colors"
-                    title="Düzenle"
-                  >
-                    ✏️
-                  </button>
-                  <button
-                    onClick={handleDelete}
-                    className="p-2 bg-red-100 text-red-600 rounded-lg hover:bg-red-200 transition-colors"
-                    title="Sil"
-                  >
-                    🗑️
-                  </button>
-                </>
+              {((isOwner && hasPermission("posts.update")) || hasPermission("posts.updateOthers")) && (
+                <button
+                  onClick={handleEdit}
+                  className="p-2 bg-blue-100 text-blue-600 rounded-lg hover:bg-blue-200 transition-colors"
+                  title="Düzenle"
+                >
+                  ✏️
+                </button>
+              )}
+              {((isOwner && hasPermission("posts.delete")) || hasPermission("posts.deleteOthers")) && (
+                <button
+                  onClick={handleDelete}
+                  className="p-2 bg-red-100 text-red-600 rounded-lg hover:bg-red-200 transition-colors"
+                  title="Sil"
+                >
+                  🗑️
+                </button>
               )}
             </div>
           </div>
@@ -923,7 +922,7 @@ export default function PostDetail() {
                         </span>
                       </div>
 
-                      {user?.id === comment.authorId && (
+                      {((user?.id === comment.authorId && hasPermission("comments.delete")) || hasPermission("comments.deleteOthers")) && (
                         <button
                           onClick={() => handleDeleteComment(comment.id)}
                           className="text-xs text-red-500 hover:text-red-700"
@@ -1130,7 +1129,7 @@ export default function PostDetail() {
                                   </span>
                                 </div>
 
-                                {user?.id === reply.authorId && (
+                                {((user?.id === reply.authorId && hasPermission("comments.delete")) || hasPermission("comments.deleteOthers")) && (
                                   <button
                                     onClick={() =>
                                       handleDeleteComment(reply.id, comment.id)
@@ -1184,7 +1183,6 @@ export default function PostDetail() {
                                                 handleDeleteAttachment(
                                                   att.id,
                                                   reply.id,
-                                                  comment.id,
                                                 )
                                               }
                                               disabled={deletingAttachment === att.id}

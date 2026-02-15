@@ -47,11 +47,11 @@ export function Toast() {
   };
 
   return (
-    <div className="fixed top-4 right-4 z-[9999] space-y-2">
+    <div className="fixed top-4 right-4 z-9999 space-y-2">
       {toasts.map((toast) => (
         <div
           key={toast.id}
-          className={`${bgColor[toast.type]} text-white px-4 py-3 rounded-lg shadow-lg flex items-center gap-2 min-w-[300px] animate-slide-in`}
+          className={`${bgColor[toast.type]} text-white px-4 py-3 rounded-lg shadow-lg flex items-center gap-2 min-w-75 animate-slide-in`}
         >
           <span>{icon[toast.type]}</span>
           <span className="text-sm font-medium flex-1">{toast.message}</span>
@@ -67,6 +67,7 @@ export function Toast() {
   );
 }
 
+// eslint-disable-next-line react-refresh/only-export-components
 export function showToast(
   message: string,
   type: "error" | "success" | "warning" | "info" = "error",

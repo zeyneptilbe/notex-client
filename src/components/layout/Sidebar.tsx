@@ -21,7 +21,6 @@ export function Sidebar({
     { id: "home", label: "Ana Sayfa", icon: "🏠" },
     { id: "drafts", label: "Taslaklarım", icon: "📝" },
     { id: "favorites", label: "Favorilerim", icon: "⭐" },
-    { id: "teams", label: "Ekipler", icon: "👥" },
   ];
 
   const adminMenuItems = [
@@ -39,7 +38,7 @@ export function Sidebar({
       {/* Backdrop (Mobil) */}
       {isOpen && (
         <div
-          className="fixed inset-0 bg-black bg-opacity-50 z-40 lg:hidden"
+          className="fixed inset-0 bg-black/30 backdrop-blur-sm z-40 lg:hidden"
           onClick={onClose}
         ></div>
       )}
@@ -47,11 +46,11 @@ export function Sidebar({
       {/* Sidebar */}
       <aside
         className={`
-          fixed lg:static inset-y-0 left-0 z-50
+          fixed lg:sticky inset-y-0 left-0 z-50 lg:top-[60px]
           w-64 bg-white border-r border-gray-200
           transform transition-transform duration-200
           ${isOpen ? "translate-x-0" : "-translate-x-full lg:translate-x-0"}
-          h-screen lg:h-auto overflow-y-auto
+          h-screen lg:h-[calc(100vh-60px)] overflow-y-auto
         `}
       >
         <div className="p-4">
@@ -106,15 +105,17 @@ export function Sidebar({
                       onMenuChange(`category-${cat.id}`);
                       onClose();
                     }}
-                    className="w-full flex items-center justify-between px-3 py-2 rounded-lg text-gray-600 hover:bg-gray-50 transition-colors"
+                    className={`
+                      w-full flex items-center gap-2 px-3 py-2 rounded-lg transition-colors
+                      ${
+                        activeMenu === `category-${cat.id}`
+                          ? "bg-blue-50 text-blue-600 font-medium"
+                          : "text-gray-600 hover:bg-gray-50"
+                      }
+                    `}
                   >
-                    <span className="flex items-center gap-2">
-                      <span>{cat.icon || "📄"}</span>
-                      <span className="text-sm">{cat.name}</span>
-                    </span>
-                    <span className="text-xs text-gray-400 bg-gray-100 px-2 py-0.5 rounded-full">
-                      {cat.postCount}
-                    </span>
+                    <span>{cat.icon || "📄"}</span>
+                    <span className="text-sm">{cat.name}</span>
                   </button>
                 ))}
               </div>
