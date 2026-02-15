@@ -1,4 +1,4 @@
-import { useState, useEffect } from "react";
+import { useState, useEffect, useRef } from "react";
 import { useParams, useNavigate } from "react-router-dom";
 import { useAuth } from "../hooks/useAuth";
 import { Avatar } from "../components/common/Avatar";
@@ -8,12 +8,74 @@ import { MarkdownViewer } from "../components/common";
 import { formatDate } from "../utils/helpers";
 import { postsApi, type Post, type PostRevision } from "../api/posts.api";
 import { RevisionCompare } from "../components/posts/RevisionCompare";
-import { commentsApi, type Comment } from "../api/comments.api";
+import {
+  commentsApi,
+  commentAttachmentsApi,
+  type Comment,
+  type CommentAttachment,
+} from "../api/comments.api";
 import { Modal } from "../components/common/Modal";
 import { AttachmentList } from "../components/posts/AttachmentList";
 import { usePopularTags } from "../hooks/useTags";
 import { isForbiddenError } from "../api/axios";
 import { showToast } from "../components/common/Toast";
+
+const ALLOWED_EXTENSIONS = new Set([
+  ".pdf", ".doc", ".docx", ".xls", ".xlsx", ".ppt", ".pptx",
+  ".png", ".jpg", ".jpeg", ".gif", ".webp", ".svg",
+  ".txt", ".csv", ".zip", ".rar", ".7z",
+]);
+
+const MAX_COMMENT_FILE_SIZE = 50 * 1024 * 1024; // 50MB
+
+function getFileExtension(fileName: string): string {
+  const idx = fileName.lastIndexOf(".");
+  return idx !== -1 ? fileName.slice(idx).toLowerCase() : "";
+}
+
+function validateCommentFiles(
+  files: File[],
+): { valid: File[]; errors: string[] } {
+  const valid: File[] = [];
+  const errors: string[] = [];
+
+  for (const file of files) {
+    const ext = getFileExtension(file.name);
+    if (!ext || !ALLOWED_EXTENSIONS.has(ext)) {
+      errors.push(
+        `"${file.name}" — desteklenmeyen dosya türü (${ext || "uzantı yok"})`,
+      );
+      continue;
+    }
+    if (file.size > MAX_COMMENT_FILE_SIZE) {
+      errors.push(
+        `"${file.name}" — dosya boyutu 50MB limitini aşıyor`,
+      );
+      continue;
+    }
+    valid.push(file);
+  }
+
+  return { valid, errors };
+}
+
+function formatFileSize(bytes: number): string {
+  if (bytes < 1024) return bytes + " B";
+  if (bytes < 1024 * 1024) return (bytes / 1024).toFixed(1) + " KB";
+  return (bytes / (1024 * 1024)).toFixed(1) + " MB";
+}
+
+function getFileIcon(contentType: string): string {
+  if (contentType.startsWith("image/")) return "🖼️";
+  if (contentType === "application/pdf") return "📕";
+  if (contentType.includes("spreadsheet") || contentType.includes("excel") || contentType === "text/csv") return "📊";
+  if (contentType.includes("document") || contentType.includes("word") || contentType.includes("msword")) return "📝";
+  if (contentType.includes("presentation") || contentType.includes("powerpoint")) return "📙";
+  if (contentType.includes("zip") || contentType.includes("compressed")) return "📦";
+  if (contentType.startsWith("video/")) return "🎬";
+  if (contentType.startsWith("audio/")) return "🎵";
+  return "📄";
+}
 
 export default function PostDetail() {
   const { slug } = useParams<{ slug: string }>();
@@ -35,6 +97,11 @@ export default function PostDetail() {
   const [showCompareModal, setShowCompareModal] = useState(false);
   const [revisions, setRevisions] = useState<PostRevision[]>([]);
   const [isLoadingRevisions, setIsLoadingRevisions] = useState(false);
+  const [commentFiles, setCommentFiles] = useState<File[]>([]);
+  const [replyFiles, setReplyFiles] = useState<File[]>([]);
+  const [deletingAttachment, setDeletingAttachment] = useState<string | null>(null);
+  const commentFileInputRef = useRef<HTMLInputElement>(null);
+  const replyFileInputRef = useRef<HTMLInputElement>(null);
 
   const { data: popularTags } = usePopularTags(8);
   const [authorPosts, setAuthorPosts] = useState<Post[]>([]);
@@ -158,8 +225,42 @@ export default function PostDetail() {
         content: newComment,
       });
 
-      setComments([newCommentData, ...comments]);
+      // Dosya varsa yükle (ayrı try/catch — yorum zaten oluştu)
+      let uploadedAttachments: CommentAttachment[] = [];
+      if (commentFiles.length > 0) {
+        const results = await Promise.allSettled(
+          commentFiles.map((file) =>
+            commentAttachmentsApi.upload(newCommentData.id, file),
+          ),
+        );
+        const failed: string[] = [];
+        results.forEach((result, idx) => {
+          if (result.status === "fulfilled") {
+            uploadedAttachments.push(result.value);
+          } else {
+            failed.push(commentFiles[idx].name);
+          }
+        });
+        if (failed.length > 0) {
+          showToast(
+            `Bazı dosyalar yüklenemedi: ${failed.join(", ")}`,
+            "error",
+          );
+        }
+      }
+
+      setComments([
+        {
+          ...newCommentData,
+          attachments: [
+            ...(newCommentData.attachments || []),
+            ...uploadedAttachments,
+          ],
+        },
+        ...comments,
+      ]);
       setNewComment("");
+      setCommentFiles([]);
 
       setPost({
         ...post,
@@ -188,12 +289,44 @@ export default function PostDetail() {
         parentCommentId: parentId,
       });
 
+      // Dosya varsa yükle (ayrı try/catch — yanıt zaten oluştu)
+      let uploadedAttachments: CommentAttachment[] = [];
+      if (replyFiles.length > 0) {
+        const results = await Promise.allSettled(
+          replyFiles.map((file) =>
+            commentAttachmentsApi.upload(newReply.id, file),
+          ),
+        );
+        const failed: string[] = [];
+        results.forEach((result, idx) => {
+          if (result.status === "fulfilled") {
+            uploadedAttachments.push(result.value);
+          } else {
+            failed.push(replyFiles[idx].name);
+          }
+        });
+        if (failed.length > 0) {
+          showToast(
+            `Bazı dosyalar yüklenemedi: ${failed.join(", ")}`,
+            "error",
+          );
+        }
+      }
+
+      const replyWithAttachments = {
+        ...newReply,
+        attachments: [
+          ...(newReply.attachments || []),
+          ...uploadedAttachments,
+        ],
+      };
+
       setComments(
         comments.map((comment) => {
           if (comment.id === parentId) {
             return {
               ...comment,
-              replies: [...(comment.replies || []), newReply],
+              replies: [...(comment.replies || []), replyWithAttachments],
             };
           }
           return comment;
@@ -202,6 +335,7 @@ export default function PostDetail() {
 
       setReplyingTo(null);
       setReplyContent("");
+      setReplyFiles([]);
 
       setPost({
         ...post,
@@ -310,6 +444,41 @@ export default function PostDetail() {
       }
     } catch (err) {
       console.error("Yorum beğeni hatası:", err);
+    }
+  };
+
+  // Yorum eki sil
+  const handleDeleteAttachment = async (
+    attachmentId: string,
+    commentId: string,
+    _parentId?: string,
+  ) => {
+    setDeletingAttachment(attachmentId);
+    try {
+      await commentAttachmentsApi.delete(attachmentId);
+
+      const removeAttachment = (c: Comment): Comment => {
+        if (c.id === commentId) {
+          return {
+            ...c,
+            attachments: c.attachments?.filter((a) => a.id !== attachmentId),
+          };
+        }
+        if (c.replies) {
+          return {
+            ...c,
+            replies: c.replies.map(removeAttachment),
+          };
+        }
+        return c;
+      };
+
+      setComments(comments.map(removeAttachment));
+    } catch (err) {
+      console.error("Ek silme hatası:", err);
+      showToast("Dosya silinirken bir hata oluştu.", "error");
+    } finally {
+      setDeletingAttachment(null);
     }
   };
 
@@ -655,7 +824,72 @@ export default function PostDetail() {
                 rows={3}
                 disabled={isSubmittingComment}
               />
-              <div className="flex justify-end mt-2">
+              {/* Seçili dosyalar */}
+              {commentFiles.length > 0 && (
+                <div className="mt-2 p-2.5 bg-blue-50/60 border border-blue-100 rounded-lg space-y-1.5">
+                  <span className="text-xs font-medium text-blue-600">
+                    {commentFiles.length} dosya seçildi
+                  </span>
+                  {commentFiles.map((file, idx) => (
+                    <div
+                      key={idx}
+                      className="flex items-center justify-between px-2.5 py-1.5 bg-white rounded-md border border-blue-100 text-xs"
+                    >
+                      <div className="flex items-center gap-2 min-w-0">
+                        <span className="shrink-0">
+                          {getFileIcon(file.type || "application/octet-stream")}
+                        </span>
+                        <span className="truncate text-gray-700">{file.name}</span>
+                        <span className="shrink-0 text-gray-400">
+                          {formatFileSize(file.size)}
+                        </span>
+                      </div>
+                      <button
+                        type="button"
+                        onClick={() =>
+                          setCommentFiles(commentFiles.filter((_, i) => i !== idx))
+                        }
+                        className="shrink-0 ml-2 p-0.5 text-red-400 hover:text-red-600 hover:bg-red-50 rounded transition-colors"
+                      >
+                        ✕
+                      </button>
+                    </div>
+                  ))}
+                </div>
+              )}
+              <div className="flex items-center justify-between mt-2 pt-2 border-t border-gray-100">
+                <div>
+                  <input
+                    ref={commentFileInputRef}
+                    type="file"
+                    className="hidden"
+                    multiple
+                    accept={Array.from(ALLOWED_EXTENSIONS).join(",")}
+                    onChange={(e) => {
+                      if (e.target.files) {
+                        const { valid, errors } = validateCommentFiles(
+                          Array.from(e.target.files),
+                        );
+                        if (errors.length > 0) {
+                          showToast(errors.join("\n"), "warning");
+                        }
+                        if (valid.length > 0) {
+                          setCommentFiles([...commentFiles, ...valid]);
+                        }
+                      }
+                      e.target.value = "";
+                    }}
+                  />
+                  <button
+                    type="button"
+                    onClick={() => commentFileInputRef.current?.click()}
+                    className="flex items-center gap-1.5 px-3 py-1.5 text-gray-500 hover:text-blue-600 hover:bg-blue-50 rounded-lg transition-colors text-sm"
+                    title="Dosya ekle"
+                  >
+                    <span>📎</span>
+                    <span className="text-xs">Dosya Ekle</span>
+                  </button>
+                </div>
                 <Button
                   onClick={handleAddComment}
                   disabled={!newComment.trim() || isSubmittingComment}
@@ -703,6 +937,56 @@ export default function PostDetail() {
                       {comment.content}
                     </p>
 
+                    {/* Yorum ekleri */}
+                    {comment.attachments && comment.attachments.length > 0 && (
+                      <div className="mb-2 p-2.5 bg-gray-50 rounded-lg border border-gray-100">
+                        <span className="text-xs font-medium text-gray-500 mb-1.5 block">
+                          📎 Ekli Dosyalar ({comment.attachments.length})
+                        </span>
+                        <div className="space-y-1">
+                          {comment.attachments.map((att) => (
+                            <div
+                              key={att.id}
+                              className="flex items-center justify-between px-2.5 py-1.5 bg-white rounded-md border border-gray-100 hover:border-gray-200 transition-colors text-xs group"
+                            >
+                              <div className="flex items-center gap-2 min-w-0">
+                                <span className="shrink-0 text-base">
+                                  {getFileIcon(att.contentType)}
+                                </span>
+                                <span className="truncate text-gray-700 font-medium">
+                                  {att.originalFileName}
+                                </span>
+                                <span className="shrink-0 text-gray-400">
+                                  {formatFileSize(att.fileSize)}
+                                </span>
+                              </div>
+                              <div className="flex items-center gap-1 shrink-0 ml-2">
+                                <button
+                                  type="button"
+                                  onClick={() => commentAttachmentsApi.download(att.id)}
+                                  className="px-2 py-0.5 text-blue-600 hover:bg-blue-50 rounded font-medium transition-colors"
+                                >
+                                  İndir
+                                </button>
+                                {user?.id === comment.authorId && (
+                                  <button
+                                    type="button"
+                                    onClick={() =>
+                                      handleDeleteAttachment(att.id, comment.id)
+                                    }
+                                    disabled={deletingAttachment === att.id}
+                                    className="px-2 py-0.5 text-red-400 hover:bg-red-50 hover:text-red-600 rounded transition-colors disabled:opacity-50"
+                                  >
+                                    {deletingAttachment === att.id ? "..." : "Sil"}
+                                  </button>
+                                )}
+                              </div>
+                            </div>
+                          ))}
+                        </div>
+                      </div>
+                    )}
+
                     <div className="flex items-center gap-4 text-xs text-gray-500">
                       <button
                         onClick={() => handleLikeComment(comment.id)}
@@ -736,25 +1020,95 @@ export default function PostDetail() {
                           rows={2}
                           disabled={isSubmittingComment}
                         />
-                        <div className="flex justify-end gap-2 mt-2">
-                          <Button
-                            variant="ghost"
-                            onClick={() => {
-                              setReplyingTo(null);
-                              setReplyContent("");
-                            }}
-                          >
-                            İptal
-                          </Button>
-                          <Button
-                            onClick={() => handleAddReply(comment.id)}
-                            disabled={
-                              !replyContent.trim() || isSubmittingComment
-                            }
-                            loading={isSubmittingComment}
-                          >
-                            Yanıtla
-                          </Button>
+                        {/* Seçili dosyalar */}
+                        {replyFiles.length > 0 && (
+                          <div className="mt-2 p-2 bg-blue-50/60 border border-blue-100 rounded-lg space-y-1">
+                            <span className="text-xs font-medium text-blue-600">
+                              {replyFiles.length} dosya seçildi
+                            </span>
+                            {replyFiles.map((file, idx) => (
+                              <div
+                                key={idx}
+                                className="flex items-center justify-between px-2 py-1 bg-white rounded-md border border-blue-100 text-xs"
+                              >
+                                <div className="flex items-center gap-1.5 min-w-0">
+                                  <span className="shrink-0">
+                                    {getFileIcon(file.type || "application/octet-stream")}
+                                  </span>
+                                  <span className="truncate text-gray-700">{file.name}</span>
+                                  <span className="shrink-0 text-gray-400">
+                                    {formatFileSize(file.size)}
+                                  </span>
+                                </div>
+                                <button
+                                  type="button"
+                                  onClick={() =>
+                                    setReplyFiles(
+                                      replyFiles.filter((_, i) => i !== idx),
+                                    )
+                                  }
+                                  className="shrink-0 ml-2 p-0.5 text-red-400 hover:text-red-600 hover:bg-red-50 rounded transition-colors"
+                                >
+                                  ✕
+                                </button>
+                              </div>
+                            ))}
+                          </div>
+                        )}
+                        <div className="flex items-center justify-between mt-2 pt-2 border-t border-gray-100">
+                          <div>
+                            <input
+                              ref={replyFileInputRef}
+                              type="file"
+                              className="hidden"
+                              multiple
+                              accept={Array.from(ALLOWED_EXTENSIONS).join(",")}
+                              onChange={(e) => {
+                                if (e.target.files) {
+                                  const { valid, errors } = validateCommentFiles(
+                                    Array.from(e.target.files),
+                                  );
+                                  if (errors.length > 0) {
+                                    showToast(errors.join("\n"), "warning");
+                                  }
+                                  if (valid.length > 0) {
+                                    setReplyFiles([...replyFiles, ...valid]);
+                                  }
+                                }
+                                e.target.value = "";
+                              }}
+                            />
+                            <button
+                              type="button"
+                              onClick={() => replyFileInputRef.current?.click()}
+                              className="flex items-center gap-1 px-2 py-1 text-gray-500 hover:text-blue-600 hover:bg-blue-50 rounded-lg transition-colors text-xs"
+                              title="Dosya ekle"
+                            >
+                              <span>📎</span>
+                              <span>Dosya Ekle</span>
+                            </button>
+                          </div>
+                          <div className="flex gap-2">
+                            <Button
+                              variant="ghost"
+                              onClick={() => {
+                                setReplyingTo(null);
+                                setReplyContent("");
+                                setReplyFiles([]);
+                              }}
+                            >
+                              İptal
+                            </Button>
+                            <Button
+                              onClick={() => handleAddReply(comment.id)}
+                              disabled={
+                                !replyContent.trim() || isSubmittingComment
+                              }
+                              loading={isSubmittingComment}
+                            >
+                              Yanıtla
+                            </Button>
+                          </div>
                         </div>
                       </div>
                     )}
@@ -790,6 +1144,63 @@ export default function PostDetail() {
                               <p className="text-gray-600 text-sm">
                                 {reply.content}
                               </p>
+                              {/* Yanıt ekleri */}
+                              {reply.attachments && reply.attachments.length > 0 && (
+                                <div className="mt-1.5 p-2 bg-gray-50 rounded-lg border border-gray-100">
+                                  <span className="text-xs font-medium text-gray-500 mb-1 block">
+                                    📎 Ekli Dosyalar ({reply.attachments.length})
+                                  </span>
+                                  <div className="space-y-1">
+                                    {reply.attachments.map((att) => (
+                                      <div
+                                        key={att.id}
+                                        className="flex items-center justify-between px-2 py-1 bg-white rounded-md border border-gray-100 hover:border-gray-200 transition-colors text-xs"
+                                      >
+                                        <div className="flex items-center gap-1.5 min-w-0">
+                                          <span className="shrink-0 text-base">
+                                            {getFileIcon(att.contentType)}
+                                          </span>
+                                          <span className="truncate text-gray-700 font-medium">
+                                            {att.originalFileName}
+                                          </span>
+                                          <span className="shrink-0 text-gray-400">
+                                            {formatFileSize(att.fileSize)}
+                                          </span>
+                                        </div>
+                                        <div className="flex items-center gap-1 shrink-0 ml-2">
+                                          <button
+                                            type="button"
+                                            onClick={() =>
+                                              commentAttachmentsApi.download(att.id)
+                                            }
+                                            className="px-2 py-0.5 text-blue-600 hover:bg-blue-50 rounded font-medium transition-colors"
+                                          >
+                                            İndir
+                                          </button>
+                                          {user?.id === reply.authorId && (
+                                            <button
+                                              type="button"
+                                              onClick={() =>
+                                                handleDeleteAttachment(
+                                                  att.id,
+                                                  reply.id,
+                                                  comment.id,
+                                                )
+                                              }
+                                              disabled={deletingAttachment === att.id}
+                                              className="px-2 py-0.5 text-red-400 hover:bg-red-50 hover:text-red-600 rounded transition-colors disabled:opacity-50"
+                                            >
+                                              {deletingAttachment === att.id
+                                                ? "..."
+                                                : "Sil"}
+                                            </button>
+                                          )}
+                                        </div>
+                                      </div>
+                                    ))}
+                                  </div>
+                                </div>
+                              )}
                               <button
                                 onClick={() =>
                                   handleLikeComment(reply.id, comment.id)
