@@ -22,7 +22,7 @@ export function MarkdownEditor({
       <MDEditor
         value={value}
         onChange={(val) => onChange(val || "")}
-        preview="live"
+        preview="edit"
         height={height}
         textareaProps={{
           placeholder,
