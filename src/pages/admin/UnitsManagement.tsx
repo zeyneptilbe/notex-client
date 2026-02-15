@@ -11,6 +11,32 @@ import { showToast } from "../../components/common/Toast";
 import type { Unit } from "../../api/units.api";
 
 export default function UnitsManagement() {
+  const { hasPermission } = useAuth();
+
+  if (
+    !hasPermission("units.create") &&
+    !hasPermission("units.update") &&
+    !hasPermission("units.delete")
+  ) {
+    return (
+      <div className="flex items-center justify-center py-20">
+        <div className="text-center">
+          <span className="text-5xl mb-4 block">🔒</span>
+          <h2 className="text-xl font-bold text-gray-800 mb-2">
+            Erişim Engellendi
+          </h2>
+          <p className="text-gray-600">
+            Birim yönetimi yetkiniz bulunmuyor.
+          </p>
+        </div>
+      </div>
+    );
+  }
+
+  return <UnitsManagementContent />;
+}
+
+function UnitsManagementContent() {
   const { data: units, isLoading, refetch } = useUnits();
   const { hasPermission } = useAuth();
   const [isModalOpen, setIsModalOpen] = useState(false);

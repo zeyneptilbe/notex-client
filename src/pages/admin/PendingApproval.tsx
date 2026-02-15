@@ -7,10 +7,33 @@ import { Avatar } from "../../components/common/Avatar";
 import { postsApi, type Post, type PostRevision } from "../../api/posts.api";
 import { RevisionCompare } from "../../components/posts/RevisionCompare";
 import { isForbiddenError } from "../../api/axios";
+import { useAuth } from "../../hooks/useAuth";
 import { showToast } from "../../components/common/Toast";
 import { formatDate } from "../../utils/helpers";
 
 export default function PendingApproval() {
+  const { hasPermission } = useAuth();
+
+  if (!hasPermission("posts.approve")) {
+    return (
+      <div className="flex items-center justify-center py-20">
+        <div className="text-center">
+          <span className="text-5xl mb-4 block">🔒</span>
+          <h2 className="text-xl font-bold text-gray-800 mb-2">
+            Erişim Engellendi
+          </h2>
+          <p className="text-gray-600">
+            Post onaylama yetkiniz bulunmuyor.
+          </p>
+        </div>
+      </div>
+    );
+  }
+
+  return <PendingApprovalContent />;
+}
+
+function PendingApprovalContent() {
   const navigate = useNavigate();
   const [posts, setPosts] = useState<Post[]>([]);
   const [totalCount, setTotalCount] = useState(0);
