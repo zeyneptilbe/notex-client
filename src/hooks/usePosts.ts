@@ -6,6 +6,8 @@ interface GetPostsParams {
   pageSize?: number;
   categoryId?: string;
   searchTerm?: string;
+  followingOnly?: boolean;
+  sortBy?: string;
 }
 
 export function usePosts(params?: GetPostsParams) {

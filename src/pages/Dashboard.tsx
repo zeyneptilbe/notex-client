@@ -6,16 +6,22 @@ import { usePosts, useLikePost, useFavoritePost } from "../hooks/usePosts";
 import { useCategories } from "../hooks/useCategories";
 import { usePopularTags } from "../hooks/useTags";
 
+type FeedTab = "all" | "following";
+
 export default function Dashboard() {
   const navigate = useNavigate();
-  const [sortBy] = useState("newest");
+  const [sortBy, setSortBy] = useState("newest");
+  const [activeTab, setActiveTab] = useState<FeedTab>("all");
 
   // API'den veri çek
   const {
     data: postsData,
     isLoading: postsLoading,
     error: postsError,
-  } = usePosts();
+  } = usePosts({
+    followingOnly: activeTab === "following" ? true : undefined,
+    sortBy: sortBy === "newest" ? undefined : sortBy === "popular" ? "MostViewed" : "MostLiked",
+  });
   const { data: categories } = useCategories();
   const { data: popularTags } = usePopularTags(8);
 
@@ -89,9 +95,28 @@ export default function Dashboard() {
       <div className="flex-1">
         <div className="flex items-center justify-between mb-6">
           <div className="flex items-center gap-3">
-            <h1 className="text-2xl font-bold text-gray-800">
-              Son Paylaşımlar
-            </h1>
+            <div className="flex bg-gray-100 rounded-lg p-1">
+              <button
+                onClick={() => setActiveTab("all")}
+                className={`px-4 py-2 rounded-md text-sm font-medium transition-colors ${
+                  activeTab === "all"
+                    ? "bg-white text-gray-800 shadow-sm"
+                    : "text-gray-500 hover:text-gray-700"
+                }`}
+              >
+                Keşfet
+              </button>
+              <button
+                onClick={() => setActiveTab("following")}
+                className={`px-4 py-2 rounded-md text-sm font-medium transition-colors ${
+                  activeTab === "following"
+                    ? "bg-white text-blue-600 shadow-sm"
+                    : "text-gray-500 hover:text-gray-700"
+                }`}
+              >
+                Takip Ettiklerim
+              </button>
+            </div>
             {postsData && (
               <span className="px-3 py-1 bg-blue-100 text-blue-600 text-sm font-medium rounded-full">
                 {postsData.totalCount} post
@@ -101,6 +126,7 @@ export default function Dashboard() {
 
           <select
             value={sortBy}
+            onChange={(e) => setSortBy(e.target.value)}
             className="px-3 py-2 border border-gray-200 rounded-lg text-sm text-gray-600 focus:outline-none focus:ring-2 focus:ring-blue-500"
           >
             <option value="newest">En Yeni</option>
@@ -116,7 +142,11 @@ export default function Dashboard() {
         ) : (
           <PostList
             posts={posts}
-            emptyMessage="Henüz hiç post paylaşılmamış. İlk postu sen paylaş!"
+            emptyMessage={
+              activeTab === "following"
+                ? "Takip ettiğiniz kişilerin henüz paylaşımı yok. Keşfet sekmesinden yeni kişileri takip edebilirsiniz!"
+                : "Henüz hiç post paylaşılmamış. İlk postu sen paylaş!"
+            }
             onPostClick={(post) => handlePostClick(post)}
             onLike={handleLike}
             onFavorite={handleFavorite}

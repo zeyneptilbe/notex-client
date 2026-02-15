@@ -63,6 +63,7 @@ interface GetPostsParams {
   status?: number;
   searchTerm?: string;
   sortBy?: string;
+  followingOnly?: boolean;
 }
 
 interface CreatePostRequest {
