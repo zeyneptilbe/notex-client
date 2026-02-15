@@ -3,7 +3,7 @@ import { useState, useEffect, useCallback } from "react";
 interface ToastMessage {
   id: number;
   message: string;
-  type: "error" | "success" | "warning";
+  type: "error" | "success" | "warning" | "info";
 }
 
 let toastId = 0;
@@ -36,12 +36,14 @@ export function Toast() {
     error: "bg-red-500",
     warning: "bg-yellow-500",
     success: "bg-green-500",
+    info: "bg-blue-500",
   };
 
   const icon = {
     error: "🚫",
     warning: "⚠️",
     success: "✓",
+    info: "ℹ️",
   };
 
   return (
@@ -67,7 +69,7 @@ export function Toast() {
 
 export function showToast(
   message: string,
-  type: "error" | "success" | "warning" = "error",
+  type: "error" | "success" | "warning" | "info" = "error",
 ) {
   window.dispatchEvent(
     new CustomEvent("app:toast", { detail: { message, type } }),

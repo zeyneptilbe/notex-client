@@ -6,8 +6,10 @@ import { Button } from "../components/common/Button";
 import { Loading } from "../components/common/Loading";
 import { MarkdownViewer } from "../components/common";
 import { formatDate } from "../utils/helpers";
-import { postsApi, type Post } from "../api/posts.api";
+import { postsApi, type Post, type PostRevision } from "../api/posts.api";
+import { RevisionCompare } from "../components/posts/RevisionCompare";
 import { commentsApi, type Comment } from "../api/comments.api";
+import { Modal } from "../components/common/Modal";
 import { AttachmentList } from "../components/posts/AttachmentList";
 import { usePopularTags } from "../hooks/useTags";
 import { isForbiddenError } from "../api/axios";
@@ -26,6 +28,13 @@ export default function PostDetail() {
   const [isLoading, setIsLoading] = useState(true);
   const [isSubmittingComment, setIsSubmittingComment] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const [isApproving, setIsApproving] = useState(false);
+  const [isRejecting, setIsRejecting] = useState(false);
+  const [showRejectModal, setShowRejectModal] = useState(false);
+  const [rejectReason, setRejectReason] = useState("");
+  const [showCompareModal, setShowCompareModal] = useState(false);
+  const [revisions, setRevisions] = useState<PostRevision[]>([]);
+  const [isLoadingRevisions, setIsLoadingRevisions] = useState(false);
 
   const { data: popularTags } = usePopularTags(8);
   const [authorPosts, setAuthorPosts] = useState<Post[]>([]);
@@ -304,6 +313,61 @@ export default function PostDetail() {
     }
   };
 
+  // Post onayla
+  const handleApprove = async () => {
+    if (!post) return;
+    setIsApproving(true);
+    try {
+      const updated = await postsApi.approve(post.id);
+      setPost(updated);
+      showToast("Post onaylandı ve yayınlandı.", "success");
+    } catch (err) {
+      if (!isForbiddenError(err)) {
+        console.error("Onay hatası:", err);
+      }
+    } finally {
+      setIsApproving(false);
+    }
+  };
+
+  // Post reddet
+  const handleReject = async () => {
+    if (!post || !rejectReason.trim()) return;
+    setIsRejecting(true);
+    try {
+      const updated = await postsApi.reject(post.id, rejectReason);
+      setPost(updated);
+      setShowRejectModal(false);
+      setRejectReason("");
+      showToast("Post reddedildi.", "info");
+    } catch (err) {
+      if (!isForbiddenError(err)) {
+        console.error("Reddetme hatası:", err);
+      }
+    } finally {
+      setIsRejecting(false);
+    }
+  };
+
+  // Revizyonları getir
+  const handleShowRevisions = async () => {
+    if (!post) return;
+    setIsLoadingRevisions(true);
+    try {
+      const data = await postsApi.getRevisions(post.id);
+      if (data.length > 0) {
+        setRevisions(data);
+        setShowCompareModal(true);
+      } else {
+        showToast("Bu postun önceki versiyonu yok.", "info");
+      }
+    } catch {
+      showToast("Revizyonlar yüklenirken hata oluştu.", "error");
+    } finally {
+      setIsLoadingRevisions(false);
+    }
+  };
+
   // Yazar profiline git
   const handleAuthorClick = () => {
     if (post?.authorId) {
@@ -345,6 +409,98 @@ export default function PostDetail() {
         <span>←</span>
         <span>Geri Dön</span>
       </button>
+
+      {/* Onay Bekliyor Banner */}
+      {post.status === 3 && (
+        <div className="mb-6 p-4 bg-amber-50 border border-amber-200 rounded-lg">
+          <div className="flex items-center justify-between">
+            <div className="flex items-center gap-3">
+              <span className="text-xl">⏳</span>
+              <div>
+                <h3 className="font-semibold text-amber-800">
+                  {isOwner ? "Postunuz onay bekliyor" : "Bu post onay bekliyor"}
+                </h3>
+                <p className="text-sm text-amber-600">
+                  Takım lideri onayından sonra yayınlanacaktır.
+                </p>
+              </div>
+            </div>
+            {hasPermission("posts.approve") && (
+              <div className="flex items-center gap-2">
+                <Button
+                  variant="secondary"
+                  onClick={handleShowRevisions}
+                  loading={isLoadingRevisions}
+                >
+                  Değişiklikleri Gör
+                </Button>
+                <Button
+                  variant="primary"
+                  onClick={handleApprove}
+                  loading={isApproving}
+                >
+                  ✓ Onayla
+                </Button>
+                <Button
+                  variant="danger"
+                  onClick={() => setShowRejectModal(true)}
+                >
+                  ✕ Reddet
+                </Button>
+              </div>
+            )}
+          </div>
+        </div>
+      )}
+
+      {/* Reddedildi Banner */}
+      {post.status === 4 && (
+        <div className="mb-6 p-4 bg-red-50 border border-red-200 rounded-lg">
+          <div className="flex items-start gap-3">
+            <span className="text-xl">🚫</span>
+            <div className="flex-1">
+              <h3 className="font-semibold text-red-800">
+                {isOwner ? "Postunuz reddedildi" : "Bu post reddedildi"}
+              </h3>
+              {post.rejectionReason && (
+                <p className="text-sm text-red-700 mt-1">
+                  <span className="font-medium">Sebep:</span> {post.rejectionReason}
+                </p>
+              )}
+              {post.reviewedByName && (
+                <p className="text-xs text-red-500 mt-1">
+                  Reddeden: {post.reviewedByName}
+                  {post.reviewedAt ? ` - ${formatDate(post.reviewedAt)}` : ""}
+                </p>
+              )}
+              {isOwner && (
+                <Button
+                  className="mt-3"
+                  variant="secondary"
+                  onClick={() => navigate(`/posts/${post.slug}/edit?publish=true`)}
+                >
+                  ✏️ Düzenle ve Tekrar Gönder
+                </Button>
+              )}
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Onaylandı Bilgisi */}
+      {post.status === 1 && post.reviewedByUserId && (
+        <div className="mb-6 p-3 bg-green-50 border border-green-200 rounded-lg">
+          <div className="flex items-center gap-2 text-sm text-green-700">
+            <span>✅</span>
+            <span>
+              Onaylayan: {post.reviewedByName}
+              {post.reviewedAt
+                ? ` - ${new Date(post.reviewedAt).toLocaleDateString("tr-TR", { year: "numeric", month: "long", day: "numeric", hour: "2-digit", minute: "2-digit" })}`
+                : ""}
+            </span>
+          </div>
+        </div>
+      )}
 
       <div className="flex gap-6">
       {/* Sol - Post İçeriği */}
@@ -750,6 +906,69 @@ export default function PostDetail() {
         )}
       </div>
       </div>
+
+      {/* Reddet Modal */}
+      <Modal
+        isOpen={showRejectModal}
+        onClose={() => {
+          setShowRejectModal(false);
+          setRejectReason("");
+        }}
+        title="Postu Reddet"
+      >
+        <div className="space-y-4">
+          <p className="text-gray-600">
+            <strong>{post.title}</strong> postunu reddetmek istediğinize emin misiniz?
+          </p>
+          <div>
+            <label className="block text-sm font-medium text-gray-700 mb-2">
+              Red Sebebi (Zorunlu)
+            </label>
+            <textarea
+              value={rejectReason}
+              onChange={(e) => setRejectReason(e.target.value)}
+              placeholder="Red sebebini yazın..."
+              className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-red-500 resize-none"
+              rows={3}
+              maxLength={500}
+            />
+            <p className="text-xs text-gray-400 mt-1 text-right">
+              {rejectReason.length}/500
+            </p>
+          </div>
+          <div className="flex justify-end gap-3">
+            <Button
+              variant="ghost"
+              onClick={() => {
+                setShowRejectModal(false);
+                setRejectReason("");
+              }}
+            >
+              İptal
+            </Button>
+            <Button
+              variant="danger"
+              onClick={handleReject}
+              loading={isRejecting}
+              disabled={!rejectReason.trim()}
+            >
+              Reddet
+            </Button>
+          </div>
+        </div>
+      </Modal>
+
+      {/* Revizyon Karşılaştırma Modal */}
+      {showCompareModal && revisions.length > 0 && post && (
+        <RevisionCompare
+          currentPost={post}
+          revisions={revisions}
+          onClose={() => {
+            setShowCompareModal(false);
+            setRevisions([]);
+          }}
+        />
+      )}
     </div>
   );
 }

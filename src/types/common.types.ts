@@ -57,6 +57,9 @@ export const NotificationType = {
   CommentLiked: 3,
   Mention: 4,
   NewFollowerPost: 5,
+  PostApprovalRequest: 8,
+  PostApproved: 9,
+  PostRejected: 10,
 } as const;
 
 export interface PaginatedResponse<T> {

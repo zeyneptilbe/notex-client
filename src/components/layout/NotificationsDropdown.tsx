@@ -15,6 +15,9 @@ const NOTIFICATION_ICONS: Record<number, string> = {
   3: "👍", // CommentLiked
   4: "📢", // Mention
   5: "📝", // NewFollowerPost
+  8: "⏳", // PostApprovalRequest
+  9: "✅", // PostApproved
+  10: "🚫", // PostRejected
 };
 
 export function NotificationsDropdown() {
