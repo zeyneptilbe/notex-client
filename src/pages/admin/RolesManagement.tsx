@@ -18,6 +18,28 @@ import type { Role } from "../../api/roles.api";
 
 export default function RolesManagement() {
   const { hasPermission } = useAuth();
+
+  if (!hasPermission("roles.manage")) {
+    return (
+      <div className="flex items-center justify-center py-20">
+        <div className="text-center">
+          <span className="text-5xl mb-4 block">🔒</span>
+          <h2 className="text-xl font-bold text-gray-800 mb-2">
+            Erişim Engellendi
+          </h2>
+          <p className="text-gray-600">
+            Rol yönetimi yetkiniz bulunmuyor.
+          </p>
+        </div>
+      </div>
+    );
+  }
+
+  return <RolesManagementContent />;
+}
+
+function RolesManagementContent() {
+  const { hasPermission } = useAuth();
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [isDeleteModalOpen, setIsDeleteModalOpen] = useState(false);
   const [editingRole, setEditingRole] = useState<Role | null>(null);
@@ -29,6 +51,7 @@ export default function RolesManagement() {
     permissions: [] as string[],
   });
   const [formErrors, setFormErrors] = useState<Record<string, string>>({});
+  const [isLoadingRole, setIsLoadingRole] = useState(false);
 
   const { data: roles, isLoading } = useRoles();
   const { data: permissionGroups } = usePermissions();
@@ -46,8 +69,6 @@ export default function RolesManagement() {
     setFormErrors({});
     setIsModalOpen(true);
   };
-
-  const [isLoadingRole, setIsLoadingRole] = useState(false);
 
   const handleOpenEdit = async (role: Role) => {
     if (!hasPermission("roles.manage")) {

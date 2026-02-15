@@ -12,6 +12,32 @@ import { showToast } from "../../components/common/Toast";
 import type { Team } from "../../api/teams.api";
 
 export default function TeamsManagement() {
+  const { hasPermission } = useAuth();
+
+  if (
+    !hasPermission("teams.create") &&
+    !hasPermission("teams.update") &&
+    !hasPermission("teams.delete")
+  ) {
+    return (
+      <div className="flex items-center justify-center py-20">
+        <div className="text-center">
+          <span className="text-5xl mb-4 block">🔒</span>
+          <h2 className="text-xl font-bold text-gray-800 mb-2">
+            Erişim Engellendi
+          </h2>
+          <p className="text-gray-600">
+            Ekip yönetimi yetkiniz bulunmuyor.
+          </p>
+        </div>
+      </div>
+    );
+  }
+
+  return <TeamsManagementContent />;
+}
+
+function TeamsManagementContent() {
   const { data: teams, isLoading, refetch } = useTeams();
   const { data: units } = useUnits();
   const { hasPermission } = useAuth();

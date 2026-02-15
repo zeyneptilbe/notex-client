@@ -36,6 +36,32 @@ const COLOR_OPTIONS = [
 ];
 
 export default function CategoriesManagement() {
+  const { hasPermission } = useAuth();
+
+  if (
+    !hasPermission("categories.create") &&
+    !hasPermission("categories.update") &&
+    !hasPermission("categories.delete")
+  ) {
+    return (
+      <div className="flex items-center justify-center py-20">
+        <div className="text-center">
+          <span className="text-5xl mb-4 block">🔒</span>
+          <h2 className="text-xl font-bold text-gray-800 mb-2">
+            Erişim Engellendi
+          </h2>
+          <p className="text-gray-600">
+            Kategori yönetimi yetkiniz bulunmuyor.
+          </p>
+        </div>
+      </div>
+    );
+  }
+
+  return <CategoriesManagementContent />;
+}
+
+function CategoriesManagementContent() {
   const { data: categories, isLoading, refetch } = useCategories();
   const { hasPermission } = useAuth();
   const [isModalOpen, setIsModalOpen] = useState(false);
