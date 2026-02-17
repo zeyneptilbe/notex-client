@@ -31,6 +31,12 @@ export default function CreatePost() {
       </div>
     );
   }
+
+  return <CreatePostContent />;
+}
+
+function CreatePostContent() {
+  const navigate = useNavigate();
   const { data: categories } = useCategories();
   const { data: allTags } = useTags();
 
