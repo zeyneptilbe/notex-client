@@ -16,6 +16,7 @@ import Teams from "../pages/Teams";
 import NotFound from "../pages/NotFound";
 import Notifications from "../pages/Notifications";
 import Drafts from "../pages/Drafts";
+import Search from "../pages/Search";
 
 // Admin Pages
 import {
@@ -93,6 +94,10 @@ export const router = createBrowserRouter([
       {
         path: "drafts",
         element: <Drafts />,
+      },
+      {
+        path: "search",
+        element: <Search />,
       },
       // Admin Routes
       {

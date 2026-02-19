@@ -27,3 +27,4 @@ export {
   useMarkAsRead,
   useMarkAllAsRead,
 } from "./useNotifications";
+export { useSearch } from "./useSearch";

@@ -7,3 +7,5 @@ export { unitsApi } from "./units.api";
 export { teamsApi } from "./teams.api";
 export { notificationsApi } from "./notifications.api";
 export { commentsApi } from "./comments.api";
+export { searchApi } from "./search.api";
+export type { SearchResult, SearchPostItem, SearchUserItem, SearchTagItem } from "./search.api";
