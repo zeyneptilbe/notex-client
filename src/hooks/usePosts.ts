@@ -5,6 +5,7 @@ interface GetPostsParams {
   pageNumber?: number;
   pageSize?: number;
   categoryId?: string;
+  tagSlug?: string;
   searchTerm?: string;
   followingOnly?: boolean;
   sortBy?: string;

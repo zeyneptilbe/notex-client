@@ -25,5 +25,6 @@ export const config = {
     comments: "/comments",
     roles: "/roles",
     permissions: "/permissions",
+    search: "/search",
   },
 } as const;

@@ -19,6 +19,7 @@ export default function Dashboard() {
   const [activeTab, setActiveTab] = useState<FeedTab>("all");
 
   const categoryId = searchParams.get("category") || undefined;
+  const tagSlug = searchParams.get("tag") || undefined;
   const { data: categories } = useCategories();
   const selectedCategory = categoryId
     ? categories?.find((c) => c.id === categoryId)
@@ -31,6 +32,7 @@ export default function Dashboard() {
     error: postsError,
   } = usePosts({
     categoryId,
+    tagSlug,
     followingOnly: activeTab === "following" ? true : undefined,
     sortBy: sortBy === "newest" ? undefined : sortBy === "popular" ? "3" : "1",
   });
@@ -147,6 +149,20 @@ export default function Dashboard() {
                 </button>
               </span>
             )}
+            {tagSlug && (
+              <span className="flex items-center gap-1.5 px-3 py-1 bg-blue-100 text-blue-700 text-sm font-medium rounded-full">
+                #{tagSlug}
+                <button
+                  onClick={() => {
+                    searchParams.delete("tag");
+                    setSearchParams(searchParams);
+                  }}
+                  className="ml-0.5 text-blue-400 hover:text-blue-700"
+                >
+                  ✕
+                </button>
+              </span>
+            )}
             {postsData && (
               <span className="px-3 py-1 bg-blue-100 text-blue-600 text-sm font-medium rounded-full">
                 {postsData.totalCount} post
@@ -185,7 +201,7 @@ export default function Dashboard() {
       </div>
 
       {/* Sağ - Sidebar */}
-      <div className="hidden lg:block w-80 space-y-5 sticky top-[84px] self-start">
+      <div className="hidden lg:block w-80 space-y-5 sticky top-21 self-start">
         {/* Popüler Yazarlar */}
         {topAuthors && topAuthors.length > 0 && (
           <div className="bg-white rounded-xl shadow-sm border border-gray-100 p-5">
@@ -208,9 +224,7 @@ export default function Dashboard() {
                     <p className="text-sm font-medium text-gray-800 truncate">
                       {author.fullName}
                     </p>
-                    <p className="text-xs text-gray-400">
-                      {author.teamName}
-                    </p>
+                    <p className="text-xs text-gray-400">{author.teamName}</p>
                   </div>
                   <span className="text-xs text-blue-600 bg-blue-50 px-2 py-0.5 rounded-full shrink-0">
                     {author.postCount} post

@@ -204,7 +204,7 @@ export default function Profile() {
 
             <div className="flex-1 pt-4 sm:pt-0 sm:pb-2">
               <div className="flex flex-col sm:flex-row sm:items-center gap-2 mb-1">
-                <h1 className="text-2xl font-bold text-gray-800">
+                <h1 className="text-2xl font-bold text-gray-800 break-words">
                   {user.fullName}
                 </h1>
                 <span
@@ -214,7 +214,7 @@ export default function Profile() {
                 </span>
               </div>
               {user.title && (
-                <p className="text-gray-700 font-medium">{user.title}</p>
+                <p className="text-gray-700 font-medium break-words">{user.title}</p>
               )}
               <p className="text-gray-600">{user.email}</p>
             </div>
@@ -243,7 +243,7 @@ export default function Profile() {
           {/* Bio */}
           {user.bio && (
             <div className="mb-4 p-4 bg-gray-50 rounded-lg">
-              <p className="text-gray-700">{user.bio}</p>
+              <p className="text-gray-700 break-words">{user.bio}</p>
             </div>
           )}
 
@@ -421,7 +421,7 @@ export default function Profile() {
         </div>
 
         {/* Sağ - Hakkında Sidebar */}
-        <div className="hidden lg:block w-80 space-y-6">
+        <div className="hidden lg:block w-80 space-y-6 sticky top-[84px] self-start">
           {/* Hakkında */}
           <div className="bg-white rounded-xl shadow-sm border border-gray-100 p-5">
             <h3 className="font-bold text-gray-800 mb-4 flex items-center gap-2">
@@ -431,12 +431,12 @@ export default function Profile() {
               {user.bio && (
                 <div>
                   <h4 className="text-xs font-semibold text-gray-500 uppercase mb-1">Bio</h4>
-                  <p className="text-sm text-gray-700">{user.bio}</p>
+                  <p className="text-sm text-gray-700 break-words">{user.bio}</p>
                 </div>
               )}
               <div>
                 <h4 className="text-xs font-semibold text-gray-500 uppercase mb-1">Ünvan</h4>
-                <p className="text-sm text-gray-700">{user.title || "Belirtilmemiş"}</p>
+                <p className="text-sm text-gray-700 break-words">{user.title || "Belirtilmemiş"}</p>
               </div>
               <div>
                 <h4 className="text-xs font-semibold text-gray-500 uppercase mb-1">Ekip</h4>

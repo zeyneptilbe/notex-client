@@ -43,7 +43,7 @@ export function PostCard({ post, onClick, onLike, onFavorite }: PostCardProps) {
   return (
     <div
       onClick={onClick}
-      className="bg-white rounded-xl shadow-sm border border-gray-100 p-5 hover:shadow-md transition-shadow cursor-pointer"
+      className="bg-white rounded-xl shadow-sm border border-gray-100 p-5 hover:shadow-md transition-shadow cursor-pointer min-w-0"
     >
       {/* Üst Kısım - Yazar ve Kategori */}
       <div className="flex items-start justify-between mb-3">
@@ -85,13 +85,13 @@ export function PostCard({ post, onClick, onLike, onFavorite }: PostCardProps) {
       </div>
 
       {/* Başlık */}
-      <h2 className="text-lg font-bold text-gray-800 mb-2 hover:text-blue-600 transition-colors">
+      <h2 className="text-lg font-bold text-gray-800 mb-2 hover:text-blue-600 transition-colors break-words">
         {post.title}
       </h2>
 
       {/* Özet */}
       {post.summary && (
-        <p className="text-gray-600 text-sm mb-3 line-clamp-2">
+        <p className="text-gray-600 text-sm mb-3 line-clamp-2 break-words">
           {post.summary}
         </p>
       )}

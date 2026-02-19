@@ -151,7 +151,7 @@ export default function Favorites() {
       </div>
 
       {/* Sağ - Sidebar */}
-      <div className="hidden lg:block w-80 space-y-5 sticky top-[84px] self-start">
+      <div className="hidden lg:block w-80 space-y-5 sticky top-21 self-start">
         {/* Popüler Yazarlar */}
         {topAuthors && topAuthors.length > 0 && (
           <div className="bg-white rounded-xl shadow-sm border border-gray-100 p-5">
@@ -174,9 +174,7 @@ export default function Favorites() {
                     <p className="text-sm font-medium text-gray-800 truncate">
                       {author.fullName}
                     </p>
-                    <p className="text-xs text-gray-400">
-                      {author.teamName}
-                    </p>
+                    <p className="text-xs text-gray-400">{author.teamName}</p>
                   </div>
                   <span className="text-xs text-blue-600 bg-blue-50 px-2 py-0.5 rounded-full shrink-0">
                     {author.postCount} post
