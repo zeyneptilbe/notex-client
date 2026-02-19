@@ -24,14 +24,18 @@ export function Sidebar({
   ];
 
   const adminMenuItems = [
-    { id: "admin-pending-approval", label: "Onay Bekleyenler", icon: "⏳" },
-    { id: "admin-users", label: "Kullanıcılar", icon: "👤" },
-    { id: "admin-roles", label: "Roller", icon: "🛡️" },
-    { id: "admin-categories", label: "Kategoriler", icon: "📁" },
-    { id: "admin-tags", label: "Etiketler", icon: "🏷️" },
-    { id: "admin-units", label: "Birimler", icon: "🏢" },
-    { id: "admin-teams", label: "Ekip Yönetimi", icon: "⚙️" },
+    { id: "admin-pending-approval", label: "Onay Bekleyenler", icon: "⏳", permissions: ["posts.approve"] },
+    { id: "admin-users", label: "Kullanıcılar", icon: "👤", permissions: ["users.create"] },
+    { id: "admin-roles", label: "Roller", icon: "🛡️", permissions: ["roles.manage"] },
+    { id: "admin-categories", label: "Kategoriler", icon: "📁", permissions: ["categories.create", "categories.update", "categories.delete"] },
+    { id: "admin-tags", label: "Etiketler", icon: "🏷️", permissions: ["tags.create", "tags.update", "tags.delete"] },
+    { id: "admin-units", label: "Birimler", icon: "🏢", permissions: ["units.create", "units.update", "units.delete"] },
+    { id: "admin-teams", label: "Ekip Yönetimi", icon: "⚙️", permissions: ["teams.create", "teams.update", "teams.delete"] },
   ];
+
+  const visibleAdminItems = adminMenuItems.filter((item) =>
+    item.permissions.some((p) => hasPermission(p))
+  );
 
   return (
     <>
@@ -123,13 +127,13 @@ export function Sidebar({
           )}
 
           {/* Admin Menü */}
-          {hasPermission("admin.access") && (
+          {visibleAdminItems.length > 0 && (
             <div>
               <h3 className="px-3 text-xs font-semibold text-gray-400 uppercase tracking-wider mb-2">
                 Yönetim
               </h3>
               <div className="space-y-1">
-                {adminMenuItems.map((item) => (
+                {visibleAdminItems.map((item) => (
                   <button
                     key={item.id}
                     onClick={() => {
