@@ -3,5 +3,7 @@ export { Input } from "./Input";
 export { Loading } from "./Loading";
 export { Modal } from "./Modal";
 export { Avatar } from "./Avatar";
+export { RichTextEditor } from "./RichTextEditor";
+export { ContentViewer } from "./ContentViewer";
 export { MarkdownEditor } from "./MarkdownEditor";
 export { MarkdownViewer } from "./MarkdownViewer";

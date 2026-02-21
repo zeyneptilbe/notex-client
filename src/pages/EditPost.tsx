@@ -299,7 +299,7 @@ export default function EditPost() {
             <MarkdownEditor
               value={content}
               onChange={setContent}
-              placeholder="Post içeriğinizi Markdown formatında yazın..."
+              placeholder="Post içeriğinizi yazın..."
               height={400}
               disabled={isSubmitting}
             />
