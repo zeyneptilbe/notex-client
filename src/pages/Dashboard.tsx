@@ -34,13 +34,13 @@ export default function Dashboard() {
     categoryId,
     tagSlug,
     followingOnly: activeTab === "following" ? true : undefined,
-    sortBy: sortBy === "newest" ? undefined : sortBy === "popular" ? "3" : "1",
+    sortBy: sortBy === "newest" ? "Latest" : sortBy === "popular" ? "Popular" : "MostLiked",
   });
   const { data: popularTags } = usePopularTags(8);
   const { data: topAuthors } = useTopAuthors(5);
   const { data: trendingData } = useQuery({
     queryKey: ["posts", "trending"],
-    queryFn: () => postsApi.getAll({ sortBy: "1", pageSize: 5 }),
+    queryFn: () => postsApi.getAll({ sortBy: "Popular", pageSize: 5 }),
   });
 
   // Mutations

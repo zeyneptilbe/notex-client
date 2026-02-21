@@ -43,7 +43,7 @@ export default function Search() {
   const { data: topAuthors } = useTopAuthors(5);
   const { data: trendingData } = useQuery({
     queryKey: ["posts", "trending"],
-    queryFn: () => postsApi.getAll({ sortBy: "1", pageSize: 5 }),
+    queryFn: () => postsApi.getAll({ sortBy: "Popular", pageSize: 5 }),
   });
 
   const postCount = searchData?.posts?.totalCount || 0;

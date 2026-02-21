@@ -18,7 +18,7 @@ export default function Drafts() {
   const { data: topAuthors } = useTopAuthors(5);
   const { data: trendingData } = useQuery({
     queryKey: ["posts", "trending"],
-    queryFn: () => postsApi.getAll({ sortBy: "1", pageSize: 5 }),
+    queryFn: () => postsApi.getAll({ sortBy: "Popular", pageSize: 5 }),
   });
 
   // Sadece kendi taslaklarını çek (status=0)
