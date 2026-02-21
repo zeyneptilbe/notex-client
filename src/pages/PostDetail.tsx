@@ -209,7 +209,7 @@ export default function PostDetail() {
 
     try {
       await postsApi.delete(post.id);
-      navigate("/");
+      navigate(-1);
     } catch (err) {
       if (!isForbiddenError(err)) {
         console.error("Post silme hatası:", err);

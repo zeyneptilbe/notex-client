@@ -1,5 +1,5 @@
-import { useState, useEffect } from "react";
-import { useParams, useNavigate } from "react-router-dom";
+import { useState, useEffect, useCallback } from "react";
+import { useParams, useNavigate, useLocation } from "react-router-dom";
 import { useAuth } from "../hooks/useAuth";
 import { useUser } from "../hooks/useUsers";
 import { Avatar } from "../components/common/Avatar";
@@ -15,6 +15,7 @@ import type { Post } from "../api/posts.api";
 export default function Profile() {
   const { id } = useParams<{ id: string }>();
   const navigate = useNavigate();
+  const location = useLocation();
   const { user: currentUser, refreshUser } = useAuth();
   const [activeTab, setActiveTab] = useState<"posts" | "favorites">(
     "posts",
@@ -47,24 +48,24 @@ export default function Profile() {
   }, [profileUser]);
 
   // Kullanıcının postlarını çek
-  useEffect(() => {
-    const fetchUserPosts = async () => {
-      if (!profileId) return;
+  const fetchUserPosts = useCallback(async () => {
+    if (!profileId) return;
 
-      setIsLoadingPosts(true);
-      try {
-        const response = await postsApi.getAll({ authorId: profileId });
-        setUserPosts(response.items || []);
-      } catch (error) {
-        console.error("Postlar yüklenirken hata:", error);
-        setUserPosts([]);
-      } finally {
-        setIsLoadingPosts(false);
-      }
-    };
-
-    fetchUserPosts();
+    setIsLoadingPosts(true);
+    try {
+      const response = await postsApi.getAll({ authorId: profileId });
+      setUserPosts(response.items || []);
+    } catch (error) {
+      console.error("Postlar yüklenirken hata:", error);
+      setUserPosts([]);
+    } finally {
+      setIsLoadingPosts(false);
+    }
   }, [profileId]);
+
+  useEffect(() => {
+    fetchUserPosts();
+  }, [fetchUserPosts, location.key]);
 
   // Favorileri çek (sadece kendi profilinde)
   useEffect(() => {
