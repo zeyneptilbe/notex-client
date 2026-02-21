@@ -4,3 +4,206 @@ body {
   font-family: system-ui, -apple-system, sans-serif;
   background-color: #f3f4f6;
 }
+
+/* TipTap Editor */
+.tiptap-editor .tiptap {
+  padding: 1rem;
+  outline: none;
+  min-height: inherit;
+  color: #1f2937;
+}
+
+.tiptap-editor .tiptap p.is-editor-empty:first-child::before {
+  content: attr(data-placeholder);
+  float: left;
+  color: #9ca3af;
+  pointer-events: none;
+  height: 0;
+}
+
+.tiptap-editor .tiptap h1 {
+  font-size: 1.875rem;
+  font-weight: 700;
+  line-height: 1.3;
+  margin: 1rem 0 0.5rem;
+}
+
+.tiptap-editor .tiptap h2 {
+  font-size: 1.5rem;
+  font-weight: 600;
+  line-height: 1.35;
+  margin: 0.875rem 0 0.5rem;
+}
+
+.tiptap-editor .tiptap h3 {
+  font-size: 1.25rem;
+  font-weight: 600;
+  line-height: 1.4;
+  margin: 0.75rem 0 0.5rem;
+}
+
+.tiptap-editor .tiptap p {
+  margin: 0.5rem 0;
+}
+
+.tiptap-editor .tiptap ul {
+  list-style-type: disc;
+  padding-left: 1.5rem;
+  margin: 0.5rem 0;
+}
+
+.tiptap-editor .tiptap ol {
+  list-style-type: decimal;
+  padding-left: 1.5rem;
+  margin: 0.5rem 0;
+}
+
+.tiptap-editor .tiptap li {
+  margin: 0.25rem 0;
+}
+
+.tiptap-editor .tiptap li p {
+  margin: 0;
+}
+
+.tiptap-editor .tiptap blockquote {
+  border-left: 3px solid #d1d5db;
+  padding-left: 1rem;
+  margin: 0.75rem 0;
+  color: #6b7280;
+  font-style: italic;
+}
+
+.tiptap-editor .tiptap code {
+  background-color: #f3f4f6;
+  border-radius: 0.25rem;
+  padding: 0.15rem 0.4rem;
+  font-size: 0.875rem;
+  font-family: ui-monospace, monospace;
+  color: #dc2626;
+}
+
+.tiptap-editor .tiptap pre {
+  background-color: #1f2937;
+  color: #e5e7eb;
+  border-radius: 0.5rem;
+  padding: 1rem;
+  margin: 0.75rem 0;
+  overflow-x: auto;
+}
+
+.tiptap-editor .tiptap pre code {
+  background: none;
+  color: inherit;
+  padding: 0;
+  font-size: 0.875rem;
+}
+
+.tiptap-editor .tiptap mark {
+  background-color: #fef08a;
+  border-radius: 0.125rem;
+  padding: 0.05rem 0.15rem;
+}
+
+.tiptap-editor .tiptap hr {
+  border: none;
+  border-top: 1px solid #e5e7eb;
+  margin: 1rem 0;
+}
+
+/* ContentViewer */
+.content-viewer h1 {
+  font-size: 1.875rem;
+  font-weight: 700;
+  line-height: 1.3;
+  margin: 1rem 0 0.5rem;
+}
+
+.content-viewer h2 {
+  font-size: 1.5rem;
+  font-weight: 600;
+  line-height: 1.35;
+  margin: 0.875rem 0 0.5rem;
+}
+
+.content-viewer h3 {
+  font-size: 1.25rem;
+  font-weight: 600;
+  line-height: 1.4;
+  margin: 0.75rem 0 0.5rem;
+}
+
+.content-viewer p {
+  margin: 0.5rem 0;
+}
+
+.content-viewer ul {
+  list-style-type: disc;
+  padding-left: 1.5rem;
+  margin: 0.5rem 0;
+}
+
+.content-viewer ol {
+  list-style-type: decimal;
+  padding-left: 1.5rem;
+  margin: 0.5rem 0;
+}
+
+.content-viewer li {
+  margin: 0.25rem 0;
+}
+
+.content-viewer blockquote {
+  border-left: 3px solid #d1d5db;
+  padding-left: 1rem;
+  margin: 0.75rem 0;
+  color: #6b7280;
+  font-style: italic;
+}
+
+.content-viewer code {
+  background-color: #f3f4f6;
+  border-radius: 0.25rem;
+  padding: 0.15rem 0.4rem;
+  font-size: 0.875rem;
+  font-family: ui-monospace, monospace;
+  color: #dc2626;
+}
+
+.content-viewer pre {
+  background-color: #1f2937;
+  color: #e5e7eb;
+  border-radius: 0.5rem;
+  padding: 1rem;
+  margin: 0.75rem 0;
+  overflow-x: auto;
+}
+
+.content-viewer pre code {
+  background: none;
+  color: inherit;
+  padding: 0;
+}
+
+.content-viewer mark {
+  background-color: #fef08a;
+}
+
+.content-viewer a {
+  color: #2563eb;
+  text-decoration: underline;
+}
+
+.content-viewer hr {
+  border: none;
+  border-top: 1px solid #e5e7eb;
+  margin: 1rem 0;
+}
+
+.content-viewer strong {
+  font-weight: 700;
+}
+
+.content-viewer em {
+  font-style: italic;
+}
