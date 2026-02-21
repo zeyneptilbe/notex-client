@@ -40,7 +40,7 @@ export default function Dashboard() {
   const { data: topAuthors } = useTopAuthors(5);
   const { data: trendingData } = useQuery({
     queryKey: ["posts", "trending"],
-    queryFn: () => postsApi.getAll({ sortBy: "3", pageSize: 5 }),
+    queryFn: () => postsApi.getAll({ sortBy: "1", pageSize: 5 }),
   });
 
   // Mutations
