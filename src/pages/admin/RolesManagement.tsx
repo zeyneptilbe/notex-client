@@ -50,7 +50,6 @@ function RolesManagementContent() {
     description: "",
     permissions: [] as string[],
   });
-  const [formErrors, setFormErrors] = useState<Record<string, string>>({});
   const [isLoadingRole, setIsLoadingRole] = useState(false);
 
   const { data: roles, isLoading } = useRoles();
@@ -66,7 +65,6 @@ function RolesManagementContent() {
     }
     setEditingRole(null);
     setFormData({ name: "", description: "", permissions: [] });
-    setFormErrors({});
     setIsModalOpen(true);
   };
 
@@ -76,7 +74,6 @@ function RolesManagementContent() {
       return;
     }
     setEditingRole(role);
-    setFormErrors({});
     setIsLoadingRole(true);
     setIsModalOpen(true);
 
@@ -126,10 +123,11 @@ function RolesManagementContent() {
   };
 
   const validateForm = (): boolean => {
-    const errors: Record<string, string> = {};
-    if (!formData.name.trim()) errors.name = "Rol adı zorunludur";
-    setFormErrors(errors);
-    return Object.keys(errors).length === 0;
+    if (!formData.name.trim()) {
+      showToast("Rol adı zorunludur.", "warning");
+      return false;
+    }
+    return true;
   };
 
   const handleSubmit = async (e: React.FormEvent) => {
@@ -297,7 +295,6 @@ function RolesManagementContent() {
             onChange={(e) =>
               setFormData({ ...formData, name: e.target.value })
             }
-            error={formErrors.name}
             placeholder="Örn: Takım Lideri"
           />
 

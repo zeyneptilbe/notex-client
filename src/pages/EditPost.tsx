@@ -32,7 +32,7 @@ export default function EditPost() {
   const [status, setStatus] = useState(1);
   const [isLoading, setIsLoading] = useState(true);
   const [isSubmitting, setIsSubmitting] = useState(false);
-  const [errors, setErrors] = useState<Record<string, string>>({});
+  const [loadError, setLoadError] = useState<string | null>(null);
   const [attachments, setAttachments] = useState<PostAttachment[]>([]);
   const [pendingFiles, setPendingFiles] = useState<File[]>([]);
   const [isUploading, setIsUploading] = useState(false);
@@ -73,7 +73,7 @@ export default function EditPost() {
       } catch (error) {
         if (!isForbiddenError(error)) {
           console.error("Post yükleme hatası:", error);
-          setErrors({ load: "Post yüklenirken bir hata oluştu." });
+          setLoadError("Post yüklenirken bir hata oluştu.");
         }
       } finally {
         setIsLoading(false);
@@ -100,22 +100,25 @@ export default function EditPost() {
   };
 
   const validate = (): boolean => {
-    const newErrors: Record<string, string> = {};
+    const messages: string[] = [];
 
     if (!title.trim()) {
-      newErrors.title = "Başlık zorunludur";
+      messages.push("Başlık zorunludur");
     } else if (title.length < 5) {
-      newErrors.title = "Başlık en az 5 karakter olmalıdır";
+      messages.push("Başlık en az 5 karakter olmalıdır");
     }
 
     if (!content.trim()) {
-      newErrors.content = "İçerik zorunludur";
+      messages.push("İçerik zorunludur");
     } else if (content.length < 50) {
-      newErrors.content = "İçerik en az 50 karakter olmalıdır";
+      messages.push("İçerik en az 50 karakter olmalıdır");
     }
 
-    setErrors(newErrors);
-    return Object.keys(newErrors).length === 0;
+    if (messages.length > 0) {
+      showToast(messages.join("\n"), "warning");
+      return false;
+    }
+    return true;
   };
 
   const handleUploadFiles = async () => {
@@ -130,7 +133,7 @@ export default function EditPost() {
       setPendingFiles([]);
     } catch (error) {
       console.error("Dosya yukleme hatasi:", error);
-      setErrors((prev) => ({ ...prev, upload: "Dosya yuklenirken bir hata olustu." }));
+      showToast("Dosya yuklenirken bir hata olustu.", "error");
     } finally {
       setIsUploading(false);
     }
@@ -184,7 +187,7 @@ export default function EditPost() {
     } catch (error) {
       if (!isForbiddenError(error)) {
         console.error("Post güncelleme hatası:", error);
-        setErrors({ submit: "Post güncellenirken bir hata oluştu." });
+        showToast("Post güncellenirken bir hata oluştu.", "error");
       }
     } finally {
       setIsSubmitting(false);
@@ -201,12 +204,12 @@ export default function EditPost() {
   }
 
   // Yükleme hatası
-  if (errors.load) {
+  if (loadError) {
     return (
       <div className="text-center py-12">
         <span className="text-5xl mb-4 block">😕</span>
         <h2 className="text-xl font-bold text-gray-800 mb-2">Hata</h2>
-        <p className="text-gray-600 mb-4">{errors.load}</p>
+        <p className="text-gray-600 mb-4">{loadError}</p>
         <Button onClick={() => navigate("/")}>Ana Sayfaya Dön</Button>
       </div>
     );
@@ -261,13 +264,6 @@ export default function EditPost() {
         </div>
       )}
 
-      {/* Genel Hata */}
-      {errors.submit && (
-        <div className="mb-6 p-4 bg-red-50 text-red-600 rounded-lg">
-          {errors.submit}
-        </div>
-      )}
-
       {/* Form */}
       <form onSubmit={handleSubmit} className="space-y-6">
         {/* Ana İçerik */}
@@ -278,7 +274,6 @@ export default function EditPost() {
               value={title}
               onChange={(e) => setTitle(e.target.value)}
               placeholder="Post başlığını girin..."
-              error={errors.title}
               disabled={isSubmitting}
             />
           </div>
@@ -307,7 +302,6 @@ export default function EditPost() {
               placeholder="Post içeriğinizi Markdown formatında yazın..."
               height={400}
               disabled={isSubmitting}
-              error={errors.content}
             />
           </div>
         </div>
@@ -478,9 +472,6 @@ export default function EditPost() {
             </div>
           )}
 
-          {errors.upload && (
-            <p className="mt-2 text-sm text-red-600">{errors.upload}</p>
-          )}
         </div>
 
         {/* Butonlar */}

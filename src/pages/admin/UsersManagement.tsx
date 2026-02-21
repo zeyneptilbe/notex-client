@@ -47,7 +47,6 @@ function UsersManagementContent() {
     roleId: "",
     title: "",
   });
-  const [formErrors, setFormErrors] = useState<Record<string, string>>({});
 
   const { data: usersData, isLoading } = useUsers({ searchTerm });
   const { data: teams } = useTeams();
@@ -68,7 +67,6 @@ function UsersManagementContent() {
       roleId: "",
       title: "",
     });
-    setFormErrors({});
     setIsModalOpen(true);
   };
 
@@ -77,19 +75,22 @@ function UsersManagementContent() {
   };
 
   const validateForm = (): boolean => {
-    const errors: Record<string, string> = {};
+    const messages: string[] = [];
 
-    if (!formData.firstName.trim()) errors.firstName = "Ad zorunludur";
-    if (!formData.lastName.trim()) errors.lastName = "Soyad zorunludur";
-    if (!formData.email.trim()) errors.email = "E-posta zorunludur";
+    if (!formData.firstName.trim()) messages.push("Ad zorunludur");
+    if (!formData.lastName.trim()) messages.push("Soyad zorunludur");
+    if (!formData.email.trim()) messages.push("E-posta zorunludur");
     if (!formData.password || formData.password.length < 6) {
-      errors.password = "Şifre en az 6 karakter olmalıdır";
+      messages.push("Şifre en az 6 karakter olmalıdır");
     }
-    if (!formData.teamId) errors.teamId = "Ekip seçimi zorunludur";
-    if (!formData.roleId) errors.roleId = "Rol seçimi zorunludur";
+    if (!formData.teamId) messages.push("Ekip seçimi zorunludur");
+    if (!formData.roleId) messages.push("Rol seçimi zorunludur");
 
-    setFormErrors(errors);
-    return Object.keys(errors).length === 0;
+    if (messages.length > 0) {
+      showToast(messages.join("\n"), "warning");
+      return false;
+    }
+    return true;
   };
 
   const handleSubmit = async (e: React.FormEvent) => {
@@ -236,7 +237,6 @@ function UsersManagementContent() {
               onChange={(e) =>
                 setFormData({ ...formData, firstName: e.target.value })
               }
-              error={formErrors.firstName}
             />
             <Input
               label="Soyad"
@@ -244,7 +244,6 @@ function UsersManagementContent() {
               onChange={(e) =>
                 setFormData({ ...formData, lastName: e.target.value })
               }
-              error={formErrors.lastName}
             />
           </div>
 
@@ -255,7 +254,6 @@ function UsersManagementContent() {
             onChange={(e) =>
               setFormData({ ...formData, email: e.target.value })
             }
-            error={formErrors.email}
           />
 
           <Input
@@ -265,7 +263,6 @@ function UsersManagementContent() {
             onChange={(e) =>
               setFormData({ ...formData, password: e.target.value })
             }
-            error={formErrors.password}
           />
 
           <Input
@@ -286,9 +283,7 @@ function UsersManagementContent() {
               onChange={(e) =>
                 setFormData({ ...formData, teamId: e.target.value })
               }
-              className={`w-full px-4 py-3 border rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 ${
-                formErrors.teamId ? "border-red-500" : "border-gray-300"
-              }`}
+              className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
             >
               <option value="">Ekip seçin...</option>
               {teams?.map((team) => (
@@ -297,9 +292,6 @@ function UsersManagementContent() {
                 </option>
               ))}
             </select>
-            {formErrors.teamId && (
-              <p className="mt-1 text-sm text-red-600">{formErrors.teamId}</p>
-            )}
           </div>
 
           <div>
@@ -311,9 +303,7 @@ function UsersManagementContent() {
               onChange={(e) =>
                 setFormData({ ...formData, roleId: e.target.value })
               }
-              className={`w-full px-4 py-3 border rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 ${
-                formErrors.roleId ? "border-red-500" : "border-gray-300"
-              }`}
+              className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
             >
               <option value="">Rol seçin...</option>
               {roles?.map((role) => (
@@ -322,9 +312,6 @@ function UsersManagementContent() {
                 </option>
               ))}
             </select>
-            {formErrors.roleId && (
-              <p className="mt-1 text-sm text-red-600">{formErrors.roleId}</p>
-            )}
           </div>
 
           <div className="flex justify-end gap-3 pt-4">

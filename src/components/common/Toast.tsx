@@ -54,7 +54,7 @@ export function Toast() {
           className={`${bgColor[toast.type]} text-white px-4 py-3 rounded-lg shadow-lg flex items-center gap-2 min-w-75 animate-slide-in`}
         >
           <span>{icon[toast.type]}</span>
-          <span className="text-sm font-medium flex-1">{toast.message}</span>
+          <span className="text-sm font-medium flex-1 whitespace-pre-line">{toast.message}</span>
           <button
             onClick={() => removeToast(toast.id)}
             className="text-white/80 hover:text-white ml-2"
