@@ -90,11 +90,12 @@ export default function Search() {
     return <Loading text="Arama sonuçları yükleniyor..." />;
   }
 
-  const tabs: { key: SearchTab; label: string; count: number; icon: string }[] = [
-    { key: "posts", label: "Postlar", count: postCount, icon: "📝" },
-    { key: "users", label: "Kullanıcılar", count: userCount, icon: "👥" },
-    { key: "tags", label: "Etiketler", count: tagCount, icon: "🏷️" },
-  ];
+  const tabs: { key: SearchTab; label: string; count: number; icon: string }[] =
+    [
+      { key: "posts", label: "Postlar", count: postCount, icon: "📝" },
+      { key: "users", label: "Kullanıcılar", count: userCount, icon: "👥" },
+      { key: "tags", label: "Etiketler", count: tagCount, icon: "🏷️" },
+    ];
 
   return (
     <div className="flex gap-6">
@@ -102,7 +103,7 @@ export default function Search() {
       <div className="flex-1 min-w-0">
         {/* Başlık */}
         <div className="mb-6">
-          <h1 className="text-2xl font-bold text-gray-800 break-words">
+          <h1 className="text-2xl font-bold text-gray-800 wrap-break-words">
             "{query}" için arama sonuçları
           </h1>
           <p className="text-gray-500 text-sm mt-1">
@@ -139,8 +140,9 @@ export default function Search() {
               posts={posts}
               emptyMessage="Bu arama için post bulunamadı."
               onPostClick={(post) => {
-                const slug =
-                  searchData?.posts?.items?.find((p) => p.id === post.id)?.slug;
+                const slug = searchData?.posts?.items?.find(
+                  (p) => p.id === post.id,
+                )?.slug;
                 if (slug) navigate(`/posts/${slug}`);
               }}
             />
@@ -323,7 +325,7 @@ export default function Search() {
       </div>
 
       {/* Sağ - Sidebar (tüm tab'larda görünür) */}
-      <div className="hidden lg:block w-80 space-y-5 sticky top-[84px] self-start">
+      <div className="hidden lg:block w-80 space-y-5 sticky top-21 self-start">
         {topAuthors && topAuthors.length > 0 && (
           <div className="bg-white rounded-xl shadow-sm border border-gray-100 p-5">
             <h3 className="font-bold text-gray-800 mb-4 flex items-center gap-2 text-sm">
@@ -345,9 +347,7 @@ export default function Search() {
                     <p className="text-sm font-medium text-gray-800 truncate">
                       {author.fullName}
                     </p>
-                    <p className="text-xs text-gray-400">
-                      {author.teamName}
-                    </p>
+                    <p className="text-xs text-gray-400">{author.teamName}</p>
                   </div>
                   <span className="text-xs text-blue-600 bg-blue-50 px-2 py-0.5 rounded-full shrink-0">
                     {author.postCount} post

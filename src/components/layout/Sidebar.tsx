@@ -24,17 +24,56 @@ export function Sidebar({
   ];
 
   const adminMenuItems = [
-    { id: "admin-pending-approval", label: "Onay Bekleyenler", icon: "⏳", permissions: ["posts.approve"] },
-    { id: "admin-users", label: "Kullanıcılar", icon: "👤", permissions: ["users.create"] },
-    { id: "admin-roles", label: "Roller", icon: "🛡️", permissions: ["roles.manage"] },
-    { id: "admin-categories", label: "Kategoriler", icon: "📁", permissions: ["categories.create", "categories.update", "categories.delete"] },
-    { id: "admin-tags", label: "Etiketler", icon: "🏷️", permissions: ["tags.create", "tags.update", "tags.delete"] },
-    { id: "admin-units", label: "Birimler", icon: "🏢", permissions: ["units.create", "units.update", "units.delete"] },
-    { id: "admin-teams", label: "Ekip Yönetimi", icon: "⚙️", permissions: ["teams.create", "teams.update", "teams.delete"] },
+    {
+      id: "admin-pending-approval",
+      label: "Onay Bekleyenler",
+      icon: "⏳",
+      permissions: ["posts.approve"],
+    },
+    {
+      id: "admin-users",
+      label: "Kullanıcılar",
+      icon: "👤",
+      permissions: ["users.create"],
+    },
+    {
+      id: "admin-roles",
+      label: "Roller",
+      icon: "🛡️",
+      permissions: ["roles.manage"],
+    },
+    {
+      id: "admin-categories",
+      label: "Kategoriler",
+      icon: "📁",
+      permissions: [
+        "categories.create",
+        "categories.update",
+        "categories.delete",
+      ],
+    },
+    {
+      id: "admin-tags",
+      label: "Etiketler",
+      icon: "🏷️",
+      permissions: ["tags.create", "tags.update", "tags.delete"],
+    },
+    {
+      id: "admin-units",
+      label: "Birimler",
+      icon: "🏢",
+      permissions: ["units.create", "units.update", "units.delete"],
+    },
+    {
+      id: "admin-teams",
+      label: "Ekip Yönetimi",
+      icon: "⚙️",
+      permissions: ["teams.create", "teams.update", "teams.delete"],
+    },
   ];
 
   const visibleAdminItems = adminMenuItems.filter((item) =>
-    item.permissions.some((p) => hasPermission(p))
+    item.permissions.some((p) => hasPermission(p)),
   );
 
   return (
@@ -50,7 +89,7 @@ export function Sidebar({
       {/* Sidebar */}
       <aside
         className={`
-          fixed lg:sticky inset-y-0 left-0 z-50 lg:top-[60px]
+          fixed lg:sticky inset-y-0 left-0 z-50 lg:top-15
           w-64 bg-white border-r border-gray-200
           transform transition-transform duration-200
           ${isOpen ? "translate-x-0" : "-translate-x-full lg:translate-x-0"}

@@ -48,7 +48,6 @@ function CreatePostContent() {
   const [visibility, setVisibility] = useState(2);
   const [status, setStatus] = useState(1);
   const [isSubmitting, setIsSubmitting] = useState(false);
-  const [errors, setErrors] = useState<Record<string, string>>({});
   const [pendingFiles, setPendingFiles] = useState<File[]>([]);
 
   const handleSelectTag = (tagName: string) => {
@@ -67,22 +66,25 @@ function CreatePostContent() {
   };
 
   const validate = (): boolean => {
-    const newErrors: Record<string, string> = {};
+    const messages: string[] = [];
 
     if (!title.trim()) {
-      newErrors.title = "Başlık zorunludur";
+      messages.push("Başlık zorunludur");
     } else if (title.length < 5) {
-      newErrors.title = "Başlık en az 5 karakter olmalıdır";
+      messages.push("Başlık en az 5 karakter olmalıdır");
     }
 
     if (!content.trim()) {
-      newErrors.content = "İçerik zorunludur";
+      messages.push("İçerik zorunludur");
     } else if (content.length < 50) {
-      newErrors.content = "İçerik en az 50 karakter olmalıdır";
+      messages.push("İçerik en az 50 karakter olmalıdır");
     }
 
-    setErrors(newErrors);
-    return Object.keys(newErrors).length === 0;
+    if (messages.length > 0) {
+      showToast(messages.join("\n"), "warning");
+      return false;
+    }
+    return true;
   };
 
   const handleSubmit = async (e: React.FormEvent) => {
@@ -118,7 +120,7 @@ function CreatePostContent() {
     } catch (error) {
       if (!isForbiddenError(error)) {
         console.error("Post oluşturma hatası:", error);
-        setErrors({ submit: "Post oluşturulurken bir hata oluştu." });
+        showToast("Post oluşturulurken bir hata oluştu.", "error");
       }
     } finally {
       setIsSubmitting(false);
@@ -147,13 +149,6 @@ function CreatePostContent() {
         </div>
       </div>
 
-      {/* Genel Hata */}
-      {errors.submit && (
-        <div className="mb-6 p-4 bg-red-50 text-red-600 rounded-lg">
-          {errors.submit}
-        </div>
-      )}
-
       {/* Form */}
       <form onSubmit={handleSubmit} className="space-y-6">
         {/* Ana İçerik */}
@@ -164,7 +159,6 @@ function CreatePostContent() {
               value={title}
               onChange={(e) => setTitle(e.target.value)}
               placeholder="Post başlığını girin..."
-              error={errors.title}
               disabled={isSubmitting}
             />
           </div>
@@ -193,7 +187,6 @@ function CreatePostContent() {
               placeholder="Post içeriğinizi Markdown formatında yazın..."
               height={400}
               disabled={isSubmitting}
-              error={errors.content}
             />
           </div>
         </div>
