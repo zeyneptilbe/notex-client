@@ -7,7 +7,7 @@ export {
 } from "./usePosts";
 export { useCategories } from "./useCategories";
 export { useTags, usePopularTags } from "./useTags";
-export { useUsers, useUser, useCreateUser } from "./useUsers";
+export { useUsers, useUser, useCreateUser, useAdminUpdateUser, useDeleteUser } from "./useUsers";
 export {
   useUnits,
   useCreateUnit,

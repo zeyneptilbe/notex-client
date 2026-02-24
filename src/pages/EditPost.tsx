@@ -14,6 +14,14 @@ import { MarkdownEditor } from "../components/common";
 import { FileUpload } from "../components/posts/FileUpload";
 import { AttachmentList } from "../components/posts/AttachmentList";
 
+const ALL_VISIBILITY_OPTIONS = [
+  { value: 0, label: "Sadece Ekibim", icon: "🔒" },
+  { value: 1, label: "Sadece Müdürlüğüm", icon: "🏢" },
+  { value: 3, label: "Grup Müdürlüğüm", icon: "👥" },
+  { value: 4, label: "Direktörlüğüm", icon: "🏛️" },
+  { value: 2, label: "Tüm Şirket", icon: "🌐" },
+];
+
 export default function EditPost() {
   const { slug } = useParams<{ slug: string }>();
   const navigate = useNavigate();
@@ -21,6 +29,12 @@ export default function EditPost() {
   const { hasPermission, user } = useAuth();
   const { data: categories } = useCategories();
   const { data: allTags } = useTags();
+
+  const allowedVisibilities = user?.allowedVisibilities ?? [2];
+  const visibilityOptions = ALL_VISIBILITY_OPTIONS.filter((opt) =>
+    allowedVisibilities.includes(opt.value),
+  );
+  const needsApproval = user?.needsPostApproval ?? false;
 
   const [postId, setPostId] = useState("");
   const [title, setTitle] = useState("");
@@ -114,6 +128,10 @@ export default function EditPost() {
       messages.push("İçerik en az 50 karakter olmalıdır");
     }
 
+    if (!categoryId) {
+      messages.push("Kategori seçimi zorunludur");
+    }
+
     if (messages.length > 0) {
       showToast(messages.join("\n"), "warning");
       return false;
@@ -172,7 +190,7 @@ export default function EditPost() {
 
       const updatedPost = await postsApi.update(postData);
 
-      if (updatedPost.status === 3) {
+      if (updatedPost.status === 3 && needsApproval) {
         if (originalStatus === 1) {
           showToast("Postunuz güncellendi ve tekrar onaya gönderildi.", "info");
         } else if (originalStatus === 4) {
@@ -313,7 +331,7 @@ export default function EditPost() {
           <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
             <div>
               <label className="block text-sm font-medium text-gray-700 mb-2">
-                Kategori
+                Kategori <span className="text-red-500">*</span>
               </label>
               <select
                 value={categoryId}
@@ -334,16 +352,24 @@ export default function EditPost() {
               <label className="block text-sm font-medium text-gray-700 mb-2">
                 Görünürlük
               </label>
-              <select
-                value={visibility}
-                onChange={(e) => setVisibility(Number(e.target.value))}
-                className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
-                disabled={isSubmitting}
-              >
-                <option value={0}>🔒 Sadece Ekibim</option>
-                <option value={1}>🏢 Sadece Birimim</option>
-                <option value={2}>🌐 Tüm Şirket</option>
-              </select>
+              {visibilityOptions.length === 1 ? (
+                <div className="w-full px-4 py-3 border border-gray-200 rounded-lg bg-gray-50 text-gray-700">
+                  {visibilityOptions[0].icon} {visibilityOptions[0].label}
+                </div>
+              ) : (
+                <select
+                  value={visibility}
+                  onChange={(e) => setVisibility(Number(e.target.value))}
+                  className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
+                  disabled={isSubmitting}
+                >
+                  {visibilityOptions.map((opt) => (
+                    <option key={opt.value} value={opt.value}>
+                      {opt.icon} {opt.label}
+                    </option>
+                  ))}
+                </select>
+              )}
             </div>
 
             <div>

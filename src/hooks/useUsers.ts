@@ -1,10 +1,11 @@
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
-import { usersApi } from "../api/users.api";
+import { usersApi, type AdminUpdateUserRequest } from "../api/users.api";
 
 interface GetUsersParams {
   pageNumber?: number;
   pageSize?: number;
   teamId?: string;
+  unitId?: string;
   searchTerm?: string;
 }
 
@@ -35,6 +36,29 @@ export function useCreateUser() {
 
   return useMutation({
     mutationFn: usersApi.create,
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["users"] });
+    },
+  });
+}
+
+export function useAdminUpdateUser() {
+  const queryClient = useQueryClient();
+
+  return useMutation({
+    mutationFn: ({ id, data }: { id: string; data: AdminUpdateUserRequest }) =>
+      usersApi.adminUpdate(id, data),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["users"] });
+    },
+  });
+}
+
+export function useDeleteUser() {
+  const queryClient = useQueryClient();
+
+  return useMutation({
+    mutationFn: (id: string) => usersApi.delete(id),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["users"] });
     },

@@ -19,8 +19,8 @@ export interface Post {
   authorName: string;
   authorTitle?: string;
   authorProfileImage?: string;
-  teamId: string;
-  teamName: string;
+  teamId?: string | null;
+  teamName?: string | null;
   unitName?: string;
   categoryId?: string;
   categoryName?: string;
@@ -162,11 +162,12 @@ export const postsApi = {
     );
     return response.data;
   },
-  getFavorites: async (): Promise<Post[]> => {
-    const response = await api.get<{ items: Post[] }>(
+  getFavorites: async (params?: { pageNumber?: number; pageSize?: number }): Promise<PostListResponse> => {
+    const response = await api.get<PostListResponse>(
       `${config.endpoints.interactions}/favorites`,
+      { params },
     );
-    return response.data.items;
+    return response.data;
   },
 
   getPendingApproval: async (params?: { pageNumber?: number; pageSize?: number }): Promise<PostListResponse> => {

@@ -8,7 +8,7 @@ export interface SearchPostItem {
   summary?: string;
   authorName: string;
   authorProfileImage?: string;
-  teamName: string;
+  teamName?: string | null;
   categoryName?: string;
   categoryColor?: string;
   likeCount: number;
@@ -24,7 +24,7 @@ export interface SearchUserItem {
   email: string;
   title?: string;
   profileImageUrl?: string;
-  teamName: string;
+  teamName?: string | null;
   unitName: string;
   postCount: number;
 }

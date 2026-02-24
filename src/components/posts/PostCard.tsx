@@ -9,7 +9,7 @@ interface Post {
   authorId?: string;
   authorName: string;
   authorProfileImage?: string;
-  teamName: string;
+  teamName?: string | null;
   createdAt: string;
   likeCount: number;
   commentCount: number;
@@ -57,7 +57,7 @@ export function PostCard({ post, onClick, onLike, onFavorite }: PostCardProps) {
               {post.authorName}
             </p>
             <p className="text-xs text-gray-500">
-              {post.teamName} • {formatDate(post.createdAt)}
+              {post.teamName ? `${post.teamName} \u2022 ` : ""}{formatDate(post.createdAt)}
             </p>
           </div>
         </div>

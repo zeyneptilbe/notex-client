@@ -77,8 +77,8 @@ export default function Profile() {
 
       setIsLoadingFavorites(true);
       try {
-        const favorites = await postsApi.getFavorites();
-        setUserFavorites(favorites || []);
+        const data = await postsApi.getFavorites({ pageSize: 50 });
+        setUserFavorites(data.items || []);
       } catch (error) {
         console.error("Favoriler yüklenirken hata:", error);
         setUserFavorites([]);
@@ -276,10 +276,12 @@ export default function Profile() {
 
           {/* Ekip ve Birim */}
           <div className="flex flex-wrap gap-4 mt-4 text-sm">
-            <div className="flex items-center gap-2 text-gray-600">
-              <span>👥</span>
-              <span>{user.teamName}</span>
-            </div>
+            {user.teamName && (
+              <div className="flex items-center gap-2 text-gray-600">
+                <span>👥</span>
+                <span>{user.teamName}</span>
+              </div>
+            )}
             <div className="flex items-center gap-2 text-gray-600">
               <span>🏢</span>
               <span>{user.unitName}</span>
@@ -441,7 +443,7 @@ export default function Profile() {
               </div>
               <div>
                 <h4 className="text-xs font-semibold text-gray-500 uppercase mb-1">Ekip</h4>
-                <p className="text-sm text-gray-700">{user.teamName}</p>
+                <p className="text-sm text-gray-700">{user.teamName || "\u2014"}</p>
               </div>
               <div>
                 <h4 className="text-xs font-semibold text-gray-500 uppercase mb-1">Birim</h4>

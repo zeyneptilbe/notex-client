@@ -115,7 +115,7 @@ function TeamsManagementContent() {
     }
 
     if (!formData.unitId) {
-      alert("Birim seçimi zorunludur");
+      alert("Müdürlük seçimi zorunludur");
       return;
     }
 
@@ -205,7 +205,7 @@ function TeamsManagementContent() {
                 Ekip Adı
               </th>
               <th className="text-left px-6 py-4 text-sm font-semibold text-gray-600">
-                Birim
+                Müdürlük
               </th>
               <th className="text-left px-6 py-4 text-sm font-semibold text-gray-600">
                 Kod
@@ -339,7 +339,7 @@ function TeamsManagementContent() {
 
           <div>
             <label className="block text-sm font-medium text-gray-700 mb-2">
-              Birim
+              Müdürlük <span className="text-red-500">*</span>
             </label>
             <select
               value={formData.unitId}
@@ -349,8 +349,8 @@ function TeamsManagementContent() {
               className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
               disabled={isSubmitting}
             >
-              <option value="">Birim seçin...</option>
-              {units?.map((unit) => (
+              <option value="">Müdürlük seçin...</option>
+              {units?.filter((u) => u.level === 3).map((unit) => (
                 <option key={unit.id} value={unit.id}>
                   {unit.name}
                 </option>

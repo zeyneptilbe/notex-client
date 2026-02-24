@@ -1,8 +1,8 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { useNavigate, useSearchParams } from "react-router-dom";
 import { useQuery } from "@tanstack/react-query";
 import { PostList } from "../components/posts";
-import { Loading } from "../components/common";
+import { Loading, Pagination } from "../components/common";
 import { Avatar } from "../components/common/Avatar";
 import { postsApi } from "../api/posts.api";
 import { usePosts, useLikePost, useFavoritePost } from "../hooks/usePosts";
@@ -17,6 +17,7 @@ export default function Dashboard() {
   const [searchParams, setSearchParams] = useSearchParams();
   const [sortBy, setSortBy] = useState("newest");
   const [activeTab, setActiveTab] = useState<FeedTab>("all");
+  const [page, setPage] = useState(1);
 
   const categoryId = searchParams.get("category") || undefined;
   const tagSlug = searchParams.get("tag") || undefined;
@@ -24,6 +25,11 @@ export default function Dashboard() {
   const selectedCategory = categoryId
     ? categories?.find((c) => c.id === categoryId)
     : undefined;
+
+  // Reset page to 1 when filters change
+  useEffect(() => {
+    setPage(1);
+  }, [sortBy, activeTab, categoryId, tagSlug]);
 
   // API'den veri çek
   const {
@@ -35,6 +41,7 @@ export default function Dashboard() {
     tagSlug,
     followingOnly: activeTab === "following" ? true : undefined,
     sortBy: sortBy === "newest" ? "Latest" : sortBy === "popular" ? "Popular" : "MostLiked",
+    pageNumber: page,
   });
   const { data: popularTags } = usePopularTags(8);
   const { data: topAuthors } = useTopAuthors(5);
@@ -186,17 +193,24 @@ export default function Dashboard() {
             <Loading text="Postlar yükleniyor..." />
           </div>
         ) : (
-          <PostList
-            posts={posts}
-            emptyMessage={
-              activeTab === "following"
-                ? "Takip ettiğiniz kişilerin henüz paylaşımı yok. Keşfet sekmesinden yeni kişileri takip edebilirsiniz!"
-                : "Henüz hiç post paylaşılmamış. İlk postu sen paylaş!"
-            }
-            onPostClick={(post) => handlePostClick(post)}
-            onLike={handleLike}
-            onFavorite={handleFavorite}
-          />
+          <>
+            <PostList
+              posts={posts}
+              emptyMessage={
+                activeTab === "following"
+                  ? "Takip ettiğiniz kişilerin henüz paylaşımı yok. Keşfet sekmesinden yeni kişileri takip edebilirsiniz!"
+                  : "Henüz hiç post paylaşılmamış. İlk postu sen paylaş!"
+              }
+              onPostClick={(post) => handlePostClick(post)}
+              onLike={handleLike}
+              onFavorite={handleFavorite}
+            />
+            <Pagination
+              currentPage={page}
+              totalPages={postsData?.totalPages ?? 1}
+              onPageChange={setPage}
+            />
+          </>
         )}
       </div>
 
@@ -224,7 +238,7 @@ export default function Dashboard() {
                     <p className="text-sm font-medium text-gray-800 truncate">
                       {author.fullName}
                     </p>
-                    <p className="text-xs text-gray-400">{author.teamName}</p>
+                    <p className="text-xs text-gray-400">{author.teamName || author.unitName}</p>
                   </div>
                   <span className="text-xs text-blue-600 bg-blue-50 px-2 py-0.5 rounded-full shrink-0">
                     {author.postCount} post

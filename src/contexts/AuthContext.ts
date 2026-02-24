@@ -10,9 +10,10 @@ export interface CurrentUser {
   roleId: string;
   roleName: string;
   permissions: string[];
-  teamId: string;
-  teamName: string;
+  teamId?: string | null;
+  teamName?: string | null;
   unitName: string;
+  unitId: string;
   profileImageUrl?: string;
   title?: string;
   bio?: string;
@@ -20,6 +21,11 @@ export interface CurrentUser {
   followerCount?: number;
   followingCount?: number;
   createdAt?: string;
+  allowedVisibilities?: number[];
+  needsPostApproval?: boolean;
+  isSuperAdmin?: boolean;
+  hasTeamAssignment?: boolean;
+  canApproveSubordinates?: boolean;
 }
 
 export interface LoginRequest {

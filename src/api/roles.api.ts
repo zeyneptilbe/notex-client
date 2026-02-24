@@ -15,6 +15,13 @@ export interface Role {
   userCount: number;
   permissionCount?: number;
   permissions: RolePermission[];
+  isSuperAdmin?: boolean;
+  hasTeamAssignment?: boolean;
+  maxUnitLevel?: number;
+  parentRoleId?: string | null;
+  parentRoleName?: string | null;
+  requiresPostApproval?: boolean;
+  canApproveSubordinates?: boolean;
 }
 
 export interface Permission {
@@ -32,12 +39,20 @@ export interface CreateRoleRequest {
   name: string;
   description: string;
   permissionIds: string[];
+  parentRoleId?: string | null;
+  requiresPostApproval?: boolean;
+  hasTeamAssignment?: boolean;
+  canApproveSubordinates?: boolean;
 }
 
 export interface UpdateRoleRequest {
   name: string;
   description: string;
   permissionIds: string[];
+  parentRoleId?: string | null;
+  requiresPostApproval?: boolean;
+  hasTeamAssignment?: boolean;
+  canApproveSubordinates?: boolean;
 }
 
 export const rolesApi = {

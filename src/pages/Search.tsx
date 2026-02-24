@@ -198,9 +198,11 @@ export default function Search() {
                         <span className="px-2 py-0.5 bg-purple-50 text-purple-600 rounded-full">
                           {user.unitName}
                         </span>
-                        <span className="px-2 py-0.5 bg-blue-50 text-blue-600 rounded-full">
-                          {user.teamName}
-                        </span>
+                        {user.teamName && (
+                          <span className="px-2 py-0.5 bg-blue-50 text-blue-600 rounded-full">
+                            {user.teamName}
+                          </span>
+                        )}
                       </div>
                       <div className="mt-3 pt-3 border-t border-gray-100 w-full">
                         <span className="text-sm font-medium text-gray-700">
@@ -347,7 +349,7 @@ export default function Search() {
                     <p className="text-sm font-medium text-gray-800 truncate">
                       {author.fullName}
                     </p>
-                    <p className="text-xs text-gray-400">{author.teamName}</p>
+                    <p className="text-xs text-gray-400">{author.teamName || author.unitName}</p>
                   </div>
                   <span className="text-xs text-blue-600 bg-blue-50 px-2 py-0.5 rounded-full shrink-0">
                     {author.postCount} post
