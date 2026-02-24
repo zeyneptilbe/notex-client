@@ -2,7 +2,7 @@ import { useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { useQuery } from "@tanstack/react-query";
 
-import { Loading } from "../components/common";
+import { Loading, Pagination } from "../components/common";
 import { Button } from "../components/common/Button";
 import { Avatar } from "../components/common/Avatar";
 import { postsApi } from "../api/posts.api";
@@ -13,7 +13,7 @@ import { useTopAuthors } from "../hooks/useUsers";
 export default function Drafts() {
   const navigate = useNavigate();
   const { user } = useAuth();
-  const [page] = useState(1);
+  const [page, setPage] = useState(1);
   const { data: popularTags } = usePopularTags(8);
   const { data: topAuthors } = useTopAuthors(5);
   const { data: trendingData } = useQuery({
@@ -21,13 +21,25 @@ export default function Drafts() {
     queryFn: () => postsApi.getAll({ sortBy: "Popular", pageSize: 5 }),
   });
 
-  // Sadece kendi taslaklarını çek (status=0)
+  // Onay bekleyen postlar (status=3)
+  const { data: pendingData, isLoading: pendingLoading } = useQuery({
+    queryKey: ["pendingPosts", user?.id],
+    queryFn: () =>
+      postsApi.getAll({
+        authorId: user?.id,
+        status: 3,
+        pageSize: 50,
+      }),
+    enabled: !!user?.id,
+  });
+
+  // Taslaklar (status=0)
   const { data, isLoading, error } = useQuery({
     queryKey: ["drafts", user?.id, page],
     queryFn: () =>
       postsApi.getAll({
         authorId: user?.id,
-        status: 0, // Taslak
+        status: 0,
         pageNumber: page,
         pageSize: 20,
       }),
@@ -51,8 +63,8 @@ export default function Drafts() {
     }
   };
 
-  if (isLoading) {
-    return <Loading text="Taslaklar yükleniyor..." />;
+  if (isLoading || pendingLoading) {
+    return <Loading text="Yükleniyor..." />;
   }
 
   if (error) {
@@ -70,109 +82,188 @@ export default function Drafts() {
     );
   }
 
+  const pendingPosts = pendingData?.items || [];
   const drafts = data?.items || [];
 
   return (
     <div className="flex gap-6">
-      {/* Sol - Taslak Listesi */}
-      <div className="flex-1">
-        {/* Header */}
-        <div className="flex items-center justify-between mb-6">
-          <div className="flex items-center gap-3">
-            <h1 className="text-2xl font-bold text-gray-800">Taslaklarım</h1>
+      {/* Sol - İçerik */}
+      <div className="flex-1 space-y-8">
+        {/* Onay Bekleyen Postlarım */}
+        {pendingPosts.length > 0 && (
+          <div>
+            <div className="flex items-center gap-3 mb-4">
+              <h2 className="text-xl font-bold text-gray-800">Onay Bekleyen Postlarım</h2>
+              <span className="px-3 py-1 bg-orange-100 text-orange-700 text-sm font-medium rounded-full">
+                {pendingPosts.length}
+              </span>
+            </div>
+
+            <div className="space-y-4">
+              {pendingPosts.map((post) => (
+                <div
+                  key={post.id}
+                  className="bg-white rounded-xl shadow-sm border border-orange-100 p-5 hover:shadow-md transition-shadow"
+                >
+                  <div className="flex items-start justify-between">
+                    <div className="flex-1">
+                      <div className="flex items-center gap-2 mb-2">
+                        <span className="px-2 py-1 bg-orange-100 text-orange-700 text-xs rounded-full">
+                          ⏳ Onay Bekliyor
+                        </span>
+                        {post.categoryName && (
+                          <span
+                            className="px-2 py-1 text-xs rounded-full"
+                            style={{
+                              backgroundColor: post.categoryColor
+                                ? `${post.categoryColor}20`
+                                : "#f3f4f6",
+                              color: post.categoryColor || "#6b7280",
+                            }}
+                          >
+                            {post.categoryIcon} {post.categoryName}
+                          </span>
+                        )}
+                      </div>
+
+                      <h2
+                        className="text-lg font-bold text-gray-800 mb-2 cursor-pointer hover:text-blue-600 transition-colors"
+                        onClick={() => handlePostClick(post)}
+                      >
+                        {post.title}
+                      </h2>
+
+                      {post.summary && (
+                        <p className="text-gray-600 text-sm mb-3 line-clamp-2">
+                          {post.summary}
+                        </p>
+                      )}
+
+                      {post.tags && post.tags.length > 0 && (
+                        <div className="flex flex-wrap gap-2 mb-3">
+                          {post.tags.slice(0, 4).map((tag) => (
+                            <span
+                              key={tag}
+                              className="px-2 py-1 bg-gray-100 text-gray-600 text-xs rounded-md"
+                            >
+                              #{tag}
+                            </span>
+                          ))}
+                        </div>
+                      )}
+
+                      <p className="text-xs text-gray-400">
+                        Gönderilme:{" "}
+                        {new Date(post.createdAt).toLocaleDateString("tr-TR")}
+                      </p>
+                    </div>
+                  </div>
+                </div>
+              ))}
+            </div>
+          </div>
+        )}
+
+        {/* Taslaklarım */}
+        <div>
+          <div className="flex items-center gap-3 mb-4">
+            <h2 className="text-xl font-bold text-gray-800">Taslaklarım</h2>
             <span className="px-3 py-1 bg-amber-100 text-amber-700 text-sm font-medium rounded-full">
               {drafts.length} taslak
             </span>
           </div>
-        </div>
 
-        {/* Taslak Listesi */}
-        {drafts.length > 0 ? (
-          <div className="space-y-4">
-            {drafts.map((draft) => (
-              <div
-                key={draft.id}
-                className="bg-white rounded-xl shadow-sm border border-gray-100 p-5 hover:shadow-md transition-shadow"
-              >
-                <div className="flex items-start justify-between">
-                  <div className="flex-1">
-                    <div className="flex items-center gap-2 mb-2">
-                      <span className="px-2 py-1 bg-amber-100 text-amber-700 text-xs rounded-full">
-                        📝 Taslak
-                      </span>
-                      {draft.categoryName && (
-                        <span
-                          className="px-2 py-1 text-xs rounded-full"
-                          style={{
-                            backgroundColor: draft.categoryColor
-                              ? `${draft.categoryColor}20`
-                              : "#f3f4f6",
-                            color: draft.categoryColor || "#6b7280",
-                          }}
-                        >
-                          {draft.categoryIcon} {draft.categoryName}
+          {drafts.length > 0 ? (
+            <div className="space-y-4">
+              {drafts.map((draft) => (
+                <div
+                  key={draft.id}
+                  className="bg-white rounded-xl shadow-sm border border-gray-100 p-5 hover:shadow-md transition-shadow"
+                >
+                  <div className="flex items-start justify-between">
+                    <div className="flex-1">
+                      <div className="flex items-center gap-2 mb-2">
+                        <span className="px-2 py-1 bg-amber-100 text-amber-700 text-xs rounded-full">
+                          📝 Taslak
                         </span>
+                        {draft.categoryName && (
+                          <span
+                            className="px-2 py-1 text-xs rounded-full"
+                            style={{
+                              backgroundColor: draft.categoryColor
+                                ? `${draft.categoryColor}20`
+                                : "#f3f4f6",
+                              color: draft.categoryColor || "#6b7280",
+                            }}
+                          >
+                            {draft.categoryIcon} {draft.categoryName}
+                          </span>
+                        )}
+                      </div>
+
+                      <h2
+                        className="text-lg font-bold text-gray-800 mb-2 cursor-pointer hover:text-blue-600 transition-colors"
+                        onClick={() => handlePostClick(draft)}
+                      >
+                        {draft.title || "Başlıksız Taslak"}
+                      </h2>
+
+                      {draft.summary && (
+                        <p className="text-gray-600 text-sm mb-3 line-clamp-2">
+                          {draft.summary}
+                        </p>
                       )}
+
+                      {draft.tags && draft.tags.length > 0 && (
+                        <div className="flex flex-wrap gap-2 mb-3">
+                          {draft.tags.slice(0, 4).map((tag) => (
+                            <span
+                              key={tag}
+                              className="px-2 py-1 bg-gray-100 text-gray-600 text-xs rounded-md"
+                            >
+                              #{tag}
+                            </span>
+                          ))}
+                        </div>
+                      )}
+
+                      <p className="text-xs text-gray-400">
+                        Son düzenleme:{" "}
+                        {new Date(draft.createdAt).toLocaleDateString("tr-TR")}
+                      </p>
                     </div>
 
-                    <h2
-                      className="text-lg font-bold text-gray-800 mb-2 cursor-pointer hover:text-blue-600 transition-colors"
-                      onClick={() => handlePostClick(draft)}
-                    >
-                      {draft.title || "Başlıksız Taslak"}
-                    </h2>
-
-                    {draft.summary && (
-                      <p className="text-gray-600 text-sm mb-3 line-clamp-2">
-                        {draft.summary}
-                      </p>
-                    )}
-
-                    {/* Etiketler */}
-                    {draft.tags && draft.tags.length > 0 && (
-                      <div className="flex flex-wrap gap-2 mb-3">
-                        {draft.tags.slice(0, 4).map((tag) => (
-                          <span
-                            key={tag}
-                            className="px-2 py-1 bg-gray-100 text-gray-600 text-xs rounded-md"
-                          >
-                            #{tag}
-                          </span>
-                        ))}
-                      </div>
-                    )}
-
-                    <p className="text-xs text-gray-400">
-                      Son düzenleme:{" "}
-                      {new Date(draft.createdAt).toLocaleDateString("tr-TR")}
-                    </p>
-                  </div>
-
-                  {/* Aksiyon Butonları */}
-                  <div className="flex items-center gap-2 ml-4">
-                    <Button variant="secondary" onClick={() => handleEdit(draft)}>
-                      ✏️ Düzenle
-                    </Button>
-                    <Button variant="primary" onClick={() => handlePublish(draft)}>
-                      🚀 Yayınla
-                    </Button>
+                    <div className="flex items-center gap-2 ml-4">
+                      <Button variant="secondary" onClick={() => handleEdit(draft)}>
+                        ✏️ Düzenle
+                      </Button>
+                      <Button variant="primary" onClick={() => handlePublish(draft)}>
+                        🚀 Yayınla
+                      </Button>
+                    </div>
                   </div>
                 </div>
-              </div>
-            ))}
-          </div>
-        ) : (
-          <div className="bg-white rounded-xl shadow-sm border border-gray-100 p-12 text-center">
-            <span className="text-5xl mb-4 block">📝</span>
-            <h2 className="text-xl font-bold text-gray-800 mb-2">Taslak Yok</h2>
-            <p className="text-gray-600 mb-4">
-              Henüz kaydedilmiş taslağınız bulunmuyor.
-            </p>
-            <Button onClick={() => navigate("/posts/new")}>
-              İlk Postunu Oluştur
-            </Button>
-          </div>
-        )}
+              ))}
+            </div>
+          ) : (
+            <div className="bg-white rounded-xl shadow-sm border border-gray-100 p-12 text-center">
+              <span className="text-5xl mb-4 block">📝</span>
+              <h2 className="text-xl font-bold text-gray-800 mb-2">Taslak Yok</h2>
+              <p className="text-gray-600 mb-4">
+                Henüz kaydedilmiş taslağınız bulunmuyor.
+              </p>
+              <Button onClick={() => navigate("/posts/new")}>
+                İlk Postunu Oluştur
+              </Button>
+            </div>
+          )}
+
+          <Pagination
+            currentPage={page}
+            totalPages={data?.totalPages ?? 1}
+            onPageChange={setPage}
+          />
+        </div>
       </div>
 
       {/* Sağ - Sidebar */}
@@ -200,7 +291,7 @@ export default function Drafts() {
                       {author.fullName}
                     </p>
                     <p className="text-xs text-gray-400">
-                      {author.teamName}
+                      {author.teamName || author.unitName}
                     </p>
                   </div>
                   <span className="text-xs text-blue-600 bg-blue-50 px-2 py-0.5 rounded-full shrink-0">

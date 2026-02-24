@@ -1,10 +1,10 @@
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { notificationsApi } from "../api/notifications.api";
 
-export function useNotifications() {
+export function useNotifications(params?: { pageNumber?: number; pageSize?: number }) {
   return useQuery({
-    queryKey: ["notifications"],
-    queryFn: () => notificationsApi.getAll(),
+    queryKey: ["notifications", params],
+    queryFn: () => notificationsApi.getAll(params),
     refetchInterval: 30000, // Her 30 saniyede bir güncelle
   });
 }

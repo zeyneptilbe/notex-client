@@ -4,6 +4,7 @@ import { Button } from "../../components/common/Button";
 import { Modal } from "../../components/common/Modal";
 import { Loading } from "../../components/common/Loading";
 import { Avatar } from "../../components/common/Avatar";
+import { Pagination } from "../../components/common/Pagination";
 import { postsApi, type Post, type PostRevision } from "../../api/posts.api";
 import { RevisionCompare } from "../../components/posts/RevisionCompare";
 import { isForbiddenError } from "../../api/axios";
@@ -37,6 +38,8 @@ function PendingApprovalContent() {
   const navigate = useNavigate();
   const [posts, setPosts] = useState<Post[]>([]);
   const [totalCount, setTotalCount] = useState(0);
+  const [page, setPage] = useState(1);
+  const [totalPages, setTotalPages] = useState(1);
   const [isLoading, setIsLoading] = useState(true);
   const [approvingId, setApprovingId] = useState<string | null>(null);
   const [showRejectModal, setShowRejectModal] = useState(false);
@@ -50,9 +53,10 @@ function PendingApprovalContent() {
   const fetchPosts = async () => {
     setIsLoading(true);
     try {
-      const data = await postsApi.getPendingApproval({ pageSize: 50 });
+      const data = await postsApi.getPendingApproval({ pageNumber: page, pageSize: 10 });
       setPosts(data.items);
       setTotalCount(data.totalCount);
+      setTotalPages(data.totalPages);
     } catch (error) {
       if (!isForbiddenError(error)) {
         console.error("Onay bekleyen postlar yüklenemedi:", error);
@@ -64,7 +68,7 @@ function PendingApprovalContent() {
 
   useEffect(() => {
     fetchPosts();
-  }, []);
+  }, [page]);
 
   const handleApprove = async (post: Post) => {
     setApprovingId(post.id);
@@ -170,7 +174,7 @@ function PendingApprovalContent() {
                         {post.authorName}
                       </p>
                       <p className="text-xs text-gray-500">
-                        {post.teamName} - {formatDate(post.createdAt)}
+                        {post.teamName ? `${post.teamName} - ` : ""}{formatDate(post.createdAt)}
                       </p>
                     </div>
                   </div>
@@ -256,6 +260,8 @@ function PendingApprovalContent() {
           </p>
         </div>
       )}
+
+      <Pagination currentPage={page} totalPages={totalPages} onPageChange={setPage} />
 
       {/* Reddet Modal */}
       <Modal

@@ -14,6 +14,8 @@ const visibilityLabels: Record<number, string> = {
   0: "Takım",
   1: "Birim",
   2: "Şirket",
+  3: "Grup Müdürlüğü",
+  4: "Direktörlük",
 };
 
 function formatFileSize(bytes: number): string {

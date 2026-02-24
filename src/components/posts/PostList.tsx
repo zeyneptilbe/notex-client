@@ -7,7 +7,7 @@ interface Post {
   summary?: string;
   authorName: string;
   authorProfileImage?: string;
-  teamName: string;
+  teamName?: string | null;
   createdAt: string;
   likeCount: number;
   commentCount: number;

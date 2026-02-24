@@ -12,9 +12,10 @@ export interface User {
   bio?: string;
   roleId: string;
   roleName: string;
-  teamId: string;
-  teamName: string;
+  teamId?: string | null;
+  teamName?: string | null;
   unitName: string;
+  unitId: string;
   createdAt: string;
   postCount: number;
   commentCount: number;
@@ -36,7 +37,8 @@ interface CreateUserRequest {
   lastName: string;
   email: string;
   password: string;
-  teamId: string;
+  teamId?: string;
+  unitId?: string;
   roleId: string;
   title?: string;
 }
@@ -47,6 +49,16 @@ export interface UpdateProfileRequest {
   title?: string;
   bio?: string;
   profileImageUrl?: string;
+}
+
+export interface AdminUpdateUserRequest {
+  firstName?: string;
+  lastName?: string;
+  email?: string;
+  title?: string;
+  roleId: string;
+  unitId?: string;
+  teamId?: string | null;
 }
 
 interface GetUsersParams {
@@ -91,6 +103,14 @@ export const usersApi = {
       currentPassword,
       newPassword,
     });
+  },
+
+  adminUpdate: async (id: string, data: AdminUpdateUserRequest): Promise<void> => {
+    await api.put(`${config.endpoints.users}/${id}/admin`, data);
+  },
+
+  delete: async (id: string): Promise<void> => {
+    await api.delete(`${config.endpoints.users}/${id}`);
   },
 
   updateRole: async (id: string, roleId: string): Promise<void> => {

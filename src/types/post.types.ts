@@ -14,6 +14,8 @@ export const PostVisibility = {
   Team: 0,
   Unit: 1,
   Company: 2,
+  GroupManagement: 3,
+  Directorate: 4,
 } as const;
 
 export type PostVisibility =
@@ -47,8 +49,8 @@ export interface Post {
   authorName: string;
   authorTitle?: string;
   authorProfileImage?: string;
-  teamId: string;
-  teamName: string;
+  teamId?: string | null;
+  teamName?: string | null;
   unitName: string;
   categoryId?: string;
   categoryName?: string;

@@ -32,7 +32,12 @@ api.interceptors.response.use(
 
     // 403 = Token geçerli ama izin yok → token yenileme yapma
     if (error.response?.status === 403) {
-      showToast("Bu işlem için yetkiniz bulunmuyor.", "warning");
+      // GET isteklerinde toast gösterme (sayfa kendi hata UI'ını gösterir)
+      // Sadece mutation'larda (POST/PUT/DELETE) toast göster
+      const method = originalRequest?.method?.toLowerCase();
+      if (method && method !== "get") {
+        showToast("Bu işlem için yetkiniz bulunmuyor.", "warning");
+      }
       return Promise.reject(error);
     }
 

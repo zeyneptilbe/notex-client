@@ -1,6 +1,5 @@
 import { createBrowserRouter } from "react-router-dom";
 import { ProtectedRoute } from "./ProtectedRoute";
-import { AdminRoute } from "./AdminRoute";
 import { AuthLayout } from "../components/layout/AuthLayout";
 import { MainLayout } from "../components/layout/MainLayout";
 
@@ -102,59 +101,31 @@ export const router = createBrowserRouter([
       // Admin Routes
       {
         path: "admin/users",
-        element: (
-          <AdminRoute>
-            <UsersManagement />
-          </AdminRoute>
-        ),
+        element: <UsersManagement />,
       },
       {
         path: "admin/categories",
-        element: (
-          <AdminRoute>
-            <CategoriesManagement />
-          </AdminRoute>
-        ),
+        element: <CategoriesManagement />,
       },
       {
         path: "admin/units",
-        element: (
-          <AdminRoute>
-            <UnitsManagement />
-          </AdminRoute>
-        ),
+        element: <UnitsManagement />,
       },
       {
         path: "admin/teams",
-        element: (
-          <AdminRoute>
-            <TeamsManagement />
-          </AdminRoute>
-        ),
+        element: <TeamsManagement />,
       },
       {
         path: "admin/tags",
-        element: (
-          <AdminRoute>
-            <TagsManagement />
-          </AdminRoute>
-        ),
+        element: <TagsManagement />,
       },
       {
         path: "admin/roles",
-        element: (
-          <AdminRoute>
-            <RolesManagement />
-          </AdminRoute>
-        ),
+        element: <RolesManagement />,
       },
       {
         path: "admin/pending-approval",
-        element: (
-          <AdminRoute>
-            <PendingApproval />
-          </AdminRoute>
-        ),
+        element: <PendingApproval />,
       },
     ],
   },

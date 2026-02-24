@@ -727,7 +727,7 @@ export default function PostDetail() {
                       {post.authorName}
                     </p>
                     <p className="text-sm text-gray-500">
-                      {post.authorTitle || post.teamName} • {post.teamName}
+                      {post.authorTitle || ""}{post.teamName ? `${post.authorTitle ? " \u2022 " : ""}${post.teamName}` : ""}
                     </p>
                     <p className="text-xs text-gray-400">
                       {formatDate(post.createdAt)}
@@ -1336,7 +1336,7 @@ export default function PostDetail() {
               <div className="flex items-center justify-between">
                 <span className="text-gray-500">Ekip</span>
                 <span className="font-medium text-gray-700">
-                  {post.teamName}
+                  {post.teamName || "\u2014"}
                 </span>
               </div>
               <div className="flex items-center justify-between">

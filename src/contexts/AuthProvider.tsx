@@ -67,7 +67,7 @@ export function AuthProvider({ children }: AuthProviderProps) {
     login,
     logout,
     refreshUser,
-    isSuperAdmin: user?.permissions?.includes("admin.access") ?? false,
+    isSuperAdmin: user?.isSuperAdmin ?? false,
     hasPermission,
   };
 

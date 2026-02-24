@@ -1,20 +1,18 @@
-import { useState, useEffect } from "react";
+import { useState } from "react";
 import { useNavigate } from "react-router-dom";
-import { useQuery } from "@tanstack/react-query";
+import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { PostList } from "../components/posts";
-import { Loading } from "../components/common";
+import { Loading, Pagination } from "../components/common";
 import { Button } from "../components/common/Button";
 import { Avatar } from "../components/common/Avatar";
 import { postsApi } from "../api/posts.api";
-import type { Post } from "../api/posts.api";
 import { usePopularTags } from "../hooks/useTags";
 import { useTopAuthors } from "../hooks/useUsers";
 
 export default function Favorites() {
   const navigate = useNavigate();
-  const [favorites, setFavorites] = useState<Post[]>([]);
-  const [isLoading, setIsLoading] = useState(true);
-  const [error, setError] = useState<string | null>(null);
+  const queryClient = useQueryClient();
+  const [page, setPage] = useState(1);
   const { data: popularTags } = usePopularTags(8);
   const { data: topAuthors } = useTopAuthors(5);
   const { data: trendingData } = useQuery({
@@ -22,24 +20,10 @@ export default function Favorites() {
     queryFn: () => postsApi.getAll({ sortBy: "Popular", pageSize: 5 }),
   });
 
-  useEffect(() => {
-    const fetchFavorites = async () => {
-      setIsLoading(true);
-      setError(null);
-
-      try {
-        const data = await postsApi.getFavorites();
-        setFavorites(data);
-      } catch (err) {
-        console.error("Favoriler yükleme hatası:", err);
-        setError("Favoriler yüklenirken bir hata oluştu.");
-      } finally {
-        setIsLoading(false);
-      }
-    };
-
-    fetchFavorites();
-  }, []);
+  const { data: favoritesData, isLoading, error } = useQuery({
+    queryKey: ["favorites", page],
+    queryFn: () => postsApi.getFavorites({ pageNumber: page, pageSize: 10 }),
+  });
 
   const handlePostClick = (post: { id: string; slug?: string }) => {
     const identifier = post.slug || post.id;
@@ -49,18 +33,7 @@ export default function Favorites() {
   const handleLike = async (postId: string) => {
     try {
       await postsApi.like(postId);
-      setFavorites(
-        favorites.map((post) => {
-          if (post.id === postId) {
-            return {
-              ...post,
-              isLiked: !post.isLiked,
-              likeCount: post.isLiked ? post.likeCount - 1 : post.likeCount + 1,
-            };
-          }
-          return post;
-        }),
-      );
+      queryClient.invalidateQueries({ queryKey: ["favorites"] });
     } catch (err) {
       console.error("Beğeni hatası:", err);
     }
@@ -69,8 +42,7 @@ export default function Favorites() {
   const handleFavorite = async (postId: string) => {
     try {
       await postsApi.favorite(postId);
-      // Favoriden çıkarıldıysa listeden kaldır
-      setFavorites(favorites.filter((post) => post.id !== postId));
+      queryClient.invalidateQueries({ queryKey: ["favorites"] });
     } catch (err) {
       console.error("Favori hatası:", err);
     }
@@ -87,7 +59,7 @@ export default function Favorites() {
       <div className="text-center py-12">
         <span className="text-4xl mb-4 block">😕</span>
         <h2 className="text-xl font-bold text-gray-800 mb-2">Hata</h2>
-        <p className="text-gray-600 mb-4">{error}</p>
+        <p className="text-gray-600 mb-4">Favoriler yüklenirken bir hata oluştu.</p>
         <Button onClick={() => window.location.reload()}>Tekrar Dene</Button>
       </div>
     );
@@ -102,39 +74,46 @@ export default function Favorites() {
           <div className="flex items-center gap-3">
             <h1 className="text-2xl font-bold text-gray-800">Favorilerim</h1>
             <span className="px-3 py-1 bg-yellow-100 text-yellow-700 text-sm font-medium rounded-full">
-              {favorites.length} post
+              {favoritesData?.totalCount ?? 0} post
             </span>
           </div>
         </div>
 
         {/* Favori Listesi */}
-        {favorites.length > 0 ? (
-          <PostList
-            posts={favorites.map((post) => ({
-              id: post.id,
-              slug: post.slug,
-              title: post.title,
-              summary: post.summary,
-              authorName: post.authorName,
-              authorProfileImage: post.authorProfileImage,
-              teamName: post.teamName,
-              createdAt: post.createdAt,
-              likeCount: post.likeCount,
-              commentCount: post.commentCount,
-              viewCount: post.viewCount,
-              categoryName: post.categoryName,
-              categoryColor: post.categoryColor,
-              categoryIcon: post.categoryIcon,
-              tags: post.tags || [],
-              isPinned: post.isPinned,
-              isLiked: post.isLiked,
-              isFavorited: true, // Favoriler sayfasında hepsi favori
-            }))}
-            emptyMessage=""
-            onPostClick={handlePostClick}
-            onLike={handleLike}
-            onFavorite={handleFavorite}
-          />
+        {favoritesData?.items && favoritesData.items.length > 0 ? (
+          <>
+            <PostList
+              posts={favoritesData.items.map((post) => ({
+                id: post.id,
+                slug: post.slug,
+                title: post.title,
+                summary: post.summary,
+                authorName: post.authorName,
+                authorProfileImage: post.authorProfileImage,
+                teamName: post.teamName,
+                createdAt: post.createdAt,
+                likeCount: post.likeCount,
+                commentCount: post.commentCount,
+                viewCount: post.viewCount,
+                categoryName: post.categoryName,
+                categoryColor: post.categoryColor,
+                categoryIcon: post.categoryIcon,
+                tags: post.tags || [],
+                isPinned: post.isPinned,
+                isLiked: post.isLiked,
+                isFavorited: true, // Favoriler sayfasında hepsi favori
+              }))}
+              emptyMessage=""
+              onPostClick={handlePostClick}
+              onLike={handleLike}
+              onFavorite={handleFavorite}
+            />
+            <Pagination
+              currentPage={page}
+              totalPages={favoritesData?.totalPages ?? 1}
+              onPageChange={setPage}
+            />
+          </>
         ) : (
           <div className="bg-white rounded-xl shadow-sm border border-gray-100 p-12 text-center">
             <span className="text-5xl mb-4 block">⭐</span>
@@ -174,7 +153,7 @@ export default function Favorites() {
                     <p className="text-sm font-medium text-gray-800 truncate">
                       {author.fullName}
                     </p>
-                    <p className="text-xs text-gray-400">{author.teamName}</p>
+                    <p className="text-xs text-gray-400">{author.teamName || author.unitName}</p>
                   </div>
                   <span className="text-xs text-blue-600 bg-blue-50 px-2 py-0.5 rounded-full shrink-0">
                     {author.postCount} post

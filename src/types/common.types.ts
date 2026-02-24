@@ -24,6 +24,9 @@ export interface Unit {
   isActive: boolean;
   displayOrder: number;
   teamCount: number;
+  level: number;
+  parentUnitId?: string | null;
+  parentUnitName?: string | null;
 }
 
 export interface Team {

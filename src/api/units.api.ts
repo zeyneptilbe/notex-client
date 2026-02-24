@@ -9,6 +9,9 @@ export interface Unit {
   isActive: boolean;
   displayOrder: number;
   teamCount: number;
+  level: number;
+  parentUnitId?: string | null;
+  parentUnitName?: string | null;
   createdAt: string;
 }
 
@@ -17,6 +20,8 @@ export interface CreateUnitRequest {
   description?: string;
   code?: string;
   displayOrder?: number;
+  level: number;
+  parentUnitId?: string;
 }
 
 export interface UpdateUnitRequest {
@@ -24,6 +29,8 @@ export interface UpdateUnitRequest {
   description?: string;
   code?: string;
   displayOrder?: number;
+  level?: number;
+  parentUnitId?: string | null;
 }
 
 export const unitsApi = {

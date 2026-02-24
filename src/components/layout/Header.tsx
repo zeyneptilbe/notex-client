@@ -164,7 +164,7 @@ export function Header({ onMenuClick, onCreatePost }: HeaderProps) {
                                   </p>
                                 )}
                                 <p className="text-xs text-gray-400 mt-0.5">
-                                  {post.authorName} · {post.teamName}
+                                  {post.authorName}{post.teamName ? ` · ${post.teamName}` : ""}
                                 </p>
                               </div>
                             </button>
@@ -209,7 +209,7 @@ export function Header({ onMenuClick, onCreatePost }: HeaderProps) {
                                   {u.fullName}
                                 </p>
                                 <p className="text-xs text-gray-500 truncate">
-                                  {u.email} · {u.teamName}
+                                  {u.email}{u.teamName ? ` · ${u.teamName}` : ""}
                                 </p>
                               </div>
                             </button>
@@ -313,7 +313,7 @@ export function Header({ onMenuClick, onCreatePost }: HeaderProps) {
                         {user?.email}
                       </p>
                       <p className="text-xs text-gray-400 mt-1">
-                        {user?.teamName}
+                        {user?.teamName || user?.unitName}
                       </p>
                     </div>
 

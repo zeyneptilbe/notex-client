@@ -11,9 +11,10 @@ export interface User {
   bio?: string;
   roleId: string;
   roleName: string;
-  teamId: string;
-  teamName: string;
+  teamId?: string | null;
+  teamName?: string | null;
   unitName: string;
+  unitId: string;
   createdAt: string;
   postCount: number;
   commentCount: number;
@@ -28,7 +29,8 @@ export interface CreateUserRequest {
   lastName: string;
   email: string;
   password: string;
-  teamId: string;
+  teamId?: string;
+  unitId?: string;
   roleId: string;
   title?: string;
 }

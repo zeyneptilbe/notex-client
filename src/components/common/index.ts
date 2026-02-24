@@ -7,3 +7,4 @@ export { RichTextEditor } from "./RichTextEditor";
 export { ContentViewer } from "./ContentViewer";
 export { MarkdownEditor } from "./MarkdownEditor";
 export { MarkdownViewer } from "./MarkdownViewer";
+export { Pagination } from "./Pagination";

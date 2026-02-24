@@ -1,3 +1,4 @@
+import { useState } from "react";
 import { useNavigate } from "react-router-dom";
 import {
   useNotifications,
@@ -7,6 +8,7 @@ import {
 import { Avatar } from "../components/common/Avatar";
 import { Button } from "../components/common/Button";
 import { Loading } from "../components/common/Loading";
+import { Pagination } from "../components/common/Pagination";
 import { formatDate } from "../utils/helpers";
 
 // Backend'den gelen bildirim türleri
@@ -46,7 +48,8 @@ interface Notification {
 
 export default function Notifications() {
   const navigate = useNavigate();
-  const { data: notificationsData, isLoading } = useNotifications();
+  const [page, setPage] = useState(1);
+  const { data: notificationsData, isLoading } = useNotifications({ pageNumber: page, pageSize: 15 });
   const markAsReadMutation = useMarkAsRead();
   const markAllAsReadMutation = useMarkAllAsRead();
 
@@ -193,6 +196,8 @@ export default function Notifications() {
           </p>
         </div>
       )}
+
+      <Pagination currentPage={page} totalPages={notificationsData?.totalPages ?? 1} onPageChange={setPage} />
     </div>
   );
 }

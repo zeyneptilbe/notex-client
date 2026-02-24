@@ -21,13 +21,17 @@ interface NotificationListResponse {
   totalCount: number;
 }
 
+interface GetNotificationsParams {
+  isRead?: boolean;
+  pageNumber?: number;
+  pageSize?: number;
+}
+
 export const notificationsApi = {
-  getAll: async (isRead?: boolean): Promise<NotificationListResponse> => {
+  getAll: async (params?: GetNotificationsParams): Promise<NotificationListResponse> => {
     const response = await api.get<NotificationListResponse>(
       config.endpoints.notifications,
-      {
-        params: { isRead },
-      },
+      { params },
     );
     return response.data;
   },

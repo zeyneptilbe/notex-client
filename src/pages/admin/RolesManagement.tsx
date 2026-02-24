@@ -49,6 +49,10 @@ function RolesManagementContent() {
     name: "",
     description: "",
     permissions: [] as string[],
+    parentRoleId: "" as string,
+    requiresPostApproval: false,
+    hasTeamAssignment: false,
+    canApproveSubordinates: false,
   });
   const [isLoadingRole, setIsLoadingRole] = useState(false);
 
@@ -64,7 +68,7 @@ function RolesManagementContent() {
       return;
     }
     setEditingRole(null);
-    setFormData({ name: "", description: "", permissions: [] });
+    setFormData({ name: "", description: "", permissions: [], parentRoleId: "", requiresPostApproval: false, hasTeamAssignment: false, canApproveSubordinates: false });
     setIsModalOpen(true);
   };
 
@@ -87,6 +91,10 @@ function RolesManagementContent() {
         name: fullRole.name,
         description: fullRole.description ?? "",
         permissions: permNames,
+        parentRoleId: fullRole.parentRoleId ?? "",
+        requiresPostApproval: fullRole.requiresPostApproval ?? false,
+        hasTeamAssignment: fullRole.hasTeamAssignment ?? false,
+        canApproveSubordinates: fullRole.canApproveSubordinates ?? false,
       });
     } catch (error) {
       console.error("Rol detayı yüklenemedi:", error);
@@ -97,6 +105,10 @@ function RolesManagementContent() {
         name: role.name,
         description: role.description ?? "",
         permissions: permNames,
+        parentRoleId: role.parentRoleId ?? "",
+        requiresPostApproval: role.requiresPostApproval ?? false,
+        hasTeamAssignment: role.hasTeamAssignment ?? false,
+        canApproveSubordinates: role.canApproveSubordinates ?? false,
       });
     } finally {
       setIsLoadingRole(false);
@@ -150,6 +162,10 @@ function RolesManagementContent() {
       name: formData.name,
       description: formData.description,
       permissionIds,
+      parentRoleId: formData.parentRoleId || null,
+      requiresPostApproval: formData.requiresPostApproval,
+      hasTeamAssignment: formData.hasTeamAssignment,
+      canApproveSubordinates: formData.canApproveSubordinates,
     };
 
     try {
@@ -223,6 +239,12 @@ function RolesManagementContent() {
               <th className="px-6 py-3 text-left text-xs font-semibold text-gray-500 uppercase">
                 İzin Sayısı
               </th>
+              <th className="px-6 py-3 text-left text-xs font-semibold text-gray-500 uppercase">
+                Üst Rol
+              </th>
+              <th className="px-6 py-3 text-left text-xs font-semibold text-gray-500 uppercase">
+                Özellikler
+              </th>
               <th className="px-6 py-3 text-right text-xs font-semibold text-gray-500 uppercase">
                 İşlemler
               </th>
@@ -246,6 +268,31 @@ function RolesManagementContent() {
                   <span className="px-2 py-1 text-xs font-medium rounded-full bg-blue-100 text-blue-700">
                     {role.permissionCount ?? 0} izin
                   </span>
+                </td>
+                <td className="px-6 py-4 text-sm text-gray-600">
+                  {role.parentRoleName || "-"}
+                </td>
+                <td className="px-6 py-4">
+                  <div className="flex flex-wrap gap-1">
+                    {role.requiresPostApproval && (
+                      <span className="px-2 py-0.5 text-xs font-medium rounded-full bg-orange-100 text-orange-700">
+                        Onay Gerekli
+                      </span>
+                    )}
+                    {role.hasTeamAssignment && (
+                      <span className="px-2 py-0.5 text-xs font-medium rounded-full bg-green-100 text-green-700">
+                        Ekip Ataması
+                      </span>
+                    )}
+                    {role.canApproveSubordinates && (
+                      <span className="px-2 py-0.5 text-xs font-medium rounded-full bg-purple-100 text-purple-700">
+                        Ast Onaylama
+                      </span>
+                    )}
+                    {!role.requiresPostApproval && !role.hasTeamAssignment && !role.canApproveSubordinates && (
+                      <span className="text-sm text-gray-400">-</span>
+                    )}
+                  </div>
                 </td>
                 <td className="px-6 py-4 text-right">
                   <div className="flex justify-end gap-2">
@@ -306,6 +353,79 @@ function RolesManagementContent() {
             }
             placeholder="Bu rolün kısa açıklaması"
           />
+
+          {/* Üst Rol Dropdown */}
+          <div>
+            <label className="block text-sm font-medium text-gray-700 mb-1">
+              Üst Rol
+            </label>
+            <select
+              value={formData.parentRoleId}
+              onChange={(e) =>
+                setFormData({ ...formData, parentRoleId: e.target.value })
+              }
+              className="w-full px-3 py-2 border border-gray-300 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+            >
+              <option value="">Üst rol yok</option>
+              {roles
+                ?.filter((r) => r.id !== editingRole?.id)
+                .map((r) => (
+                  <option key={r.id} value={r.id}>
+                    {r.name}
+                  </option>
+                ))}
+            </select>
+          </div>
+
+          {/* Rol Özellikleri Toggle'ları */}
+          <div>
+            <label className="block text-sm font-medium text-gray-700 mb-3">
+              Rol Özellikleri
+            </label>
+            <div className="space-y-3 border border-gray-200 rounded-lg p-4">
+              <label className="flex items-center justify-between cursor-pointer">
+                <div>
+                  <span className="text-sm font-medium text-gray-700">Post Onayı Gerektirir</span>
+                  <p className="text-xs text-gray-500">Bu roldeki kullanıcıların postları onay gerektirir</p>
+                </div>
+                <button
+                  type="button"
+                  onClick={() => setFormData({ ...formData, requiresPostApproval: !formData.requiresPostApproval })}
+                  className={`relative inline-flex h-6 w-11 items-center rounded-full transition-colors ${formData.requiresPostApproval ? "bg-blue-600" : "bg-gray-300"}`}
+                >
+                  <span className={`inline-block h-4 w-4 transform rounded-full bg-white transition-transform ${formData.requiresPostApproval ? "translate-x-6" : "translate-x-1"}`} />
+                </button>
+              </label>
+
+              <label className="flex items-center justify-between cursor-pointer">
+                <div>
+                  <span className="text-sm font-medium text-gray-700">Ekip Ataması</span>
+                  <p className="text-xs text-gray-500">Bu roldeki kullanıcılara ekip atanabilir</p>
+                </div>
+                <button
+                  type="button"
+                  onClick={() => setFormData({ ...formData, hasTeamAssignment: !formData.hasTeamAssignment })}
+                  className={`relative inline-flex h-6 w-11 items-center rounded-full transition-colors ${formData.hasTeamAssignment ? "bg-blue-600" : "bg-gray-300"}`}
+                >
+                  <span className={`inline-block h-4 w-4 transform rounded-full bg-white transition-transform ${formData.hasTeamAssignment ? "translate-x-6" : "translate-x-1"}`} />
+                </button>
+              </label>
+
+              <label className="flex items-center justify-between cursor-pointer">
+                <div>
+                  <span className="text-sm font-medium text-gray-700">Ast Onaylama</span>
+                  <p className="text-xs text-gray-500">Bu roldeki kullanıcılar astlarının postlarını onaylayabilir</p>
+                </div>
+                <button
+                  type="button"
+                  onClick={() => setFormData({ ...formData, canApproveSubordinates: !formData.canApproveSubordinates })}
+                  className={`relative inline-flex h-6 w-11 items-center rounded-full transition-colors ${formData.canApproveSubordinates ? "bg-blue-600" : "bg-gray-300"}`}
+                >
+                  <span className={`inline-block h-4 w-4 transform rounded-full bg-white transition-transform ${formData.canApproveSubordinates ? "translate-x-6" : "translate-x-1"}`} />
+                </button>
+              </label>
+            </div>
+          </div>
 
           {/* Permission Checkbox Listesi */}
           <div>
