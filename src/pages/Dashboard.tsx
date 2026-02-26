@@ -1,4 +1,4 @@
-import { useState, useEffect } from "react";
+import { useState } from "react";
 import { useNavigate, useSearchParams } from "react-router-dom";
 import { useQuery } from "@tanstack/react-query";
 import { PostList } from "../components/posts";
@@ -26,10 +26,21 @@ export default function Dashboard() {
     ? categories?.find((c) => c.id === categoryId)
     : undefined;
 
-  // Reset page to 1 when filters change
-  useEffect(() => {
+  const handleSortChange = (value: string) => {
+    setSortBy(value);
     setPage(1);
-  }, [sortBy, activeTab, categoryId, tagSlug]);
+  };
+
+  const handleTabChange = (tab: FeedTab) => {
+    setActiveTab(tab);
+    setPage(1);
+  };
+
+  const handleRemoveFilter = (key: string) => {
+    searchParams.delete(key);
+    setSearchParams(searchParams);
+    setPage(1);
+  };
 
   // API'den veri çek
   const {
@@ -122,7 +133,7 @@ export default function Dashboard() {
           <div className="flex items-center gap-3">
             <div className="flex bg-gray-100 rounded-lg p-1">
               <button
-                onClick={() => setActiveTab("all")}
+                onClick={() => handleTabChange("all")}
                 className={`px-4 py-2 rounded-md text-sm font-medium transition-colors ${
                   activeTab === "all"
                     ? "bg-white text-gray-800 shadow-sm"
@@ -132,7 +143,7 @@ export default function Dashboard() {
                 Keşfet
               </button>
               <button
-                onClick={() => setActiveTab("following")}
+                onClick={() => handleTabChange("following")}
                 className={`px-4 py-2 rounded-md text-sm font-medium transition-colors ${
                   activeTab === "following"
                     ? "bg-white text-blue-600 shadow-sm"
@@ -146,10 +157,7 @@ export default function Dashboard() {
               <span className="flex items-center gap-1.5 px-3 py-1 bg-indigo-100 text-indigo-700 text-sm font-medium rounded-full">
                 {selectedCategory.icon} {selectedCategory.name}
                 <button
-                  onClick={() => {
-                    searchParams.delete("category");
-                    setSearchParams(searchParams);
-                  }}
+                  onClick={() => handleRemoveFilter("category")}
                   className="ml-0.5 text-indigo-400 hover:text-indigo-700"
                 >
                   ✕
@@ -160,10 +168,7 @@ export default function Dashboard() {
               <span className="flex items-center gap-1.5 px-3 py-1 bg-blue-100 text-blue-700 text-sm font-medium rounded-full">
                 #{tagSlug}
                 <button
-                  onClick={() => {
-                    searchParams.delete("tag");
-                    setSearchParams(searchParams);
-                  }}
+                  onClick={() => handleRemoveFilter("tag")}
                   className="ml-0.5 text-blue-400 hover:text-blue-700"
                 >
                   ✕
@@ -179,7 +184,7 @@ export default function Dashboard() {
 
           <select
             value={sortBy}
-            onChange={(e) => setSortBy(e.target.value)}
+            onChange={(e) => handleSortChange(e.target.value)}
             className="px-3 py-2 border border-gray-200 rounded-lg text-sm text-gray-600 focus:outline-none focus:ring-2 focus:ring-blue-500"
           >
             <option value="newest">En Yeni</option>

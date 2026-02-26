@@ -263,9 +263,9 @@ function UsersManagementContent() {
       showToast("Kullanıcı başarıyla güncellendi.", "success");
       setIsEditModalOpen(false);
       setEditingUser(null);
-    } catch (error: any) {
+    } catch (error) {
       console.error("[AdminUpdate] error:", error);
-      const data = error?.response?.data;
+      const data = (error as { response?: { data?: { errors?: Record<string, string[]>; message?: string } } })?.response?.data;
       if (data?.errors) {
         const msgs = Object.values(data.errors).flat().join("\n");
         showToast(msgs, "error");
@@ -289,8 +289,8 @@ function UsersManagementContent() {
       showToast("Kullanıcı başarıyla silindi.", "success");
       setIsDeleteModalOpen(false);
       setDeletingUser(null);
-    } catch (error: any) {
-      const msg = error?.response?.data?.message;
+    } catch (error) {
+      const msg = (error as { response?: { data?: { message?: string } } })?.response?.data?.message;
       showToast(msg || "Kullanıcı silinirken bir hata oluştu.", "error");
     }
   };
@@ -346,8 +346,8 @@ function UsersManagementContent() {
         title: formData.title || undefined,
       });
       setIsModalOpen(false);
-    } catch (error: any) {
-      const data = error?.response?.data;
+    } catch (error) {
+      const data = (error as { response?: { data?: { errors?: Record<string, string[]>; message?: string } } })?.response?.data;
       if (data?.errors) {
         const msgs = Object.values(data.errors).flat().join("\n");
         showToast(msgs, "error");
