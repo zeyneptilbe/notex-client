@@ -93,7 +93,9 @@ export default function Drafts() {
         {pendingPosts.length > 0 && (
           <div>
             <div className="flex items-center gap-3 mb-4">
-              <h2 className="text-xl font-bold text-gray-800">Onay Bekleyen Postlarım</h2>
+              <h2 className="text-xl font-bold text-gray-800">
+                Onay Bekleyen Postlarım
+              </h2>
               <span className="px-3 py-1 bg-orange-100 text-orange-700 text-sm font-medium rounded-full">
                 {pendingPosts.length}
               </span>
@@ -234,10 +236,16 @@ export default function Drafts() {
                     </div>
 
                     <div className="flex items-center gap-2 ml-4">
-                      <Button variant="secondary" onClick={() => handleEdit(draft)}>
+                      <Button
+                        variant="secondary"
+                        onClick={() => handleEdit(draft)}
+                      >
                         ✏️ Düzenle
                       </Button>
-                      <Button variant="primary" onClick={() => handlePublish(draft)}>
+                      <Button
+                        variant="primary"
+                        onClick={() => handlePublish(draft)}
+                      >
                         🚀 Yayınla
                       </Button>
                     </div>
@@ -248,7 +256,9 @@ export default function Drafts() {
           ) : (
             <div className="bg-white rounded-xl shadow-sm border border-gray-100 p-12 text-center">
               <span className="text-5xl mb-4 block">📝</span>
-              <h2 className="text-xl font-bold text-gray-800 mb-2">Taslak Yok</h2>
+              <h2 className="text-xl font-bold text-gray-800 mb-2">
+                Taslak Yok
+              </h2>
               <p className="text-gray-600 mb-4">
                 Henüz kaydedilmiş taslağınız bulunmuyor.
               </p>
@@ -267,7 +277,7 @@ export default function Drafts() {
       </div>
 
       {/* Sağ - Sidebar */}
-      <div className="hidden lg:block w-80 space-y-5 sticky top-[84px] self-start">
+      <div className="hidden lg:block w-80 space-y-5 sticky top-21 self-start">
         {/* Popüler Yazarlar */}
         {topAuthors && topAuthors.length > 0 && (
           <div className="bg-white rounded-xl shadow-sm border border-gray-100 p-5">

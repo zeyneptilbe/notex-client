@@ -1,4 +1,4 @@
-import { useState, useEffect } from "react";
+import { useState, useEffect, useCallback } from "react";
 import { useNavigate } from "react-router-dom";
 import { Button } from "../../components/common/Button";
 import { Modal } from "../../components/common/Modal";
@@ -50,7 +50,7 @@ function PendingApprovalContent() {
   const [compareRevisions, setCompareRevisions] = useState<PostRevision[]>([]);
   const [loadingRevisionId, setLoadingRevisionId] = useState<string | null>(null);
 
-  const fetchPosts = async () => {
+  const fetchPosts = useCallback(async () => {
     setIsLoading(true);
     try {
       const data = await postsApi.getPendingApproval({ pageNumber: page, pageSize: 10 });
@@ -64,11 +64,11 @@ function PendingApprovalContent() {
     } finally {
       setIsLoading(false);
     }
-  };
+  }, [page]);
 
   useEffect(() => {
     fetchPosts();
-  }, [page]);
+  }, [fetchPosts]);
 
   const handleApprove = async (post: Post) => {
     setApprovingId(post.id);

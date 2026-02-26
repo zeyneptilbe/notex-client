@@ -17,9 +17,7 @@ export default function Profile() {
   const navigate = useNavigate();
   const location = useLocation();
   const { user: currentUser, refreshUser } = useAuth();
-  const [activeTab, setActiveTab] = useState<"posts" | "favorites">(
-    "posts",
-  );
+  const [activeTab, setActiveTab] = useState<"posts" | "favorites">("posts");
   const [isEditModalOpen, setIsEditModalOpen] = useState(false);
   const [userPosts, setUserPosts] = useState<Post[]>([]);
   const [userFavorites, setUserFavorites] = useState<Post[]>([]);
@@ -205,17 +203,17 @@ export default function Profile() {
 
             <div className="flex-1 pt-4 sm:pt-0 sm:pb-2">
               <div className="flex flex-col sm:flex-row sm:items-center gap-2 mb-1">
-                <h1 className="text-2xl font-bold text-gray-800 break-words">
+                <h1 className="text-2xl font-bold text-gray-800 wrap-break-words">
                   {user.fullName}
                 </h1>
-                <span
-                  className="px-2 py-1 text-xs font-medium rounded-full bg-blue-100 text-blue-700 w-fit"
-                >
+                <span className="px-2 py-1 text-xs font-medium rounded-full bg-blue-100 text-blue-700 w-fit">
                   {roleName}
                 </span>
               </div>
               {user.title && (
-                <p className="text-gray-700 font-medium break-words">{user.title}</p>
+                <p className="text-gray-700 font-medium wrap-break-words">
+                  {user.title}
+                </p>
               )}
               <p className="text-gray-600">{user.email}</p>
             </div>
@@ -244,7 +242,7 @@ export default function Profile() {
           {/* Bio */}
           {user.bio && (
             <div className="mb-4 p-4 bg-gray-50 rounded-lg">
-              <p className="text-gray-700 break-words">{user.bio}</p>
+              <p className="text-gray-700 wrap-break-words">{user.bio}</p>
             </div>
           )}
 
@@ -424,7 +422,7 @@ export default function Profile() {
         </div>
 
         {/* Sağ - Hakkında Sidebar */}
-        <div className="hidden lg:block w-80 space-y-6 sticky top-[84px] self-start">
+        <div className="hidden lg:block w-80 space-y-6 sticky top-21 self-start">
           {/* Hakkında */}
           <div className="bg-white rounded-xl shadow-sm border border-gray-100 p-5">
             <h3 className="font-bold text-gray-800 mb-4 flex items-center gap-2">
@@ -433,30 +431,50 @@ export default function Profile() {
             <div className="space-y-4">
               {user.bio && (
                 <div>
-                  <h4 className="text-xs font-semibold text-gray-500 uppercase mb-1">Bio</h4>
-                  <p className="text-sm text-gray-700 break-words">{user.bio}</p>
+                  <h4 className="text-xs font-semibold text-gray-500 uppercase mb-1">
+                    Bio
+                  </h4>
+                  <p className="text-sm text-gray-700 wrap-break-words">
+                    {user.bio}
+                  </p>
                 </div>
               )}
               <div>
-                <h4 className="text-xs font-semibold text-gray-500 uppercase mb-1">Ünvan</h4>
-                <p className="text-sm text-gray-700 break-words">{user.title || "Belirtilmemiş"}</p>
+                <h4 className="text-xs font-semibold text-gray-500 uppercase mb-1">
+                  Ünvan
+                </h4>
+                <p className="text-sm text-gray-700 wrap-break-words">
+                  {user.title || "Belirtilmemiş"}
+                </p>
               </div>
               <div>
-                <h4 className="text-xs font-semibold text-gray-500 uppercase mb-1">Ekip</h4>
-                <p className="text-sm text-gray-700">{user.teamName || "\u2014"}</p>
+                <h4 className="text-xs font-semibold text-gray-500 uppercase mb-1">
+                  Ekip
+                </h4>
+                <p className="text-sm text-gray-700">
+                  {user.teamName || "\u2014"}
+                </p>
               </div>
               <div>
-                <h4 className="text-xs font-semibold text-gray-500 uppercase mb-1">Birim</h4>
+                <h4 className="text-xs font-semibold text-gray-500 uppercase mb-1">
+                  Birim
+                </h4>
                 <p className="text-sm text-gray-700">{user.unitName}</p>
               </div>
               <div>
-                <h4 className="text-xs font-semibold text-gray-500 uppercase mb-1">İletişim</h4>
+                <h4 className="text-xs font-semibold text-gray-500 uppercase mb-1">
+                  İletişim
+                </h4>
                 <p className="text-sm text-gray-700">{user.email}</p>
               </div>
               {user.createdAt && (
                 <div>
-                  <h4 className="text-xs font-semibold text-gray-500 uppercase mb-1">Katılım Tarihi</h4>
-                  <p className="text-sm text-gray-700">{formatDate(user.createdAt)}</p>
+                  <h4 className="text-xs font-semibold text-gray-500 uppercase mb-1">
+                    Katılım Tarihi
+                  </h4>
+                  <p className="text-sm text-gray-700">
+                    {formatDate(user.createdAt)}
+                  </p>
                 </div>
               )}
             </div>
